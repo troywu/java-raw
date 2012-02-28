@@ -1,0 +1,7 @@
+package com.crinqle.dlroom.event;
+
+
+public interface RawRasterSelectionListener
+{
+	
+}

@@ -1,0 +1,2730 @@
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./app/Main.java	2012-02-28 04:18:15.000000000 -0800
++++ ./app/Main.java	2012-02-28 04:18:15.000000000 -0800
+@@ -8,10 +8,8 @@
+ import java.io.*;
+ import java.util.*;
+ import javax.swing.*;
+-import javax.swing.border.*;
+ import javax.swing.event.*;
+ 
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ import com.crinqle.dlroom.codec.*;
+ import com.crinqle.dlroom.event.*;
+@@ -19,91 +17,46 @@
+ import com.crinqle.dlroom.util.*;
+ 
+ 
+-public class Main extends JFrame implements ActionListener, WindowListener, LUTChangeListener, ListSelectionListener, RawRasterSelectionListener
++public class Main extends JFrame implements Const, ActionListener, WindowListener, LUTChangeListener
+ {
+-	/*
+-	 * File menu
+-	 */
+-	private JMenuItem f_newItem = new JMenuItem("New...", 'n');
+ 	private JMenuItem f_openItem = new JMenuItem("Open...", 'o');
+ 	private JMenuItem f_saveItem = new JMenuItem("Save", 's');
+ 	private JMenuItem f_saveAsItem = new JMenuItem("Save as...");
+ 	private JMenuItem f_quitItem = new JMenuItem("Quit", 'q');
+ 
+-	/*
+-	 * Edit menu
+-	 */
+ 	private JMenuItem f_redoItem = new JMenuItem("Redo", 'y');
+ 	private JMenuItem f_undoItem = new JMenuItem("Undo", 'u');
+-	private JMenuItem f_applyItem = new JMenuItem("Apply Curves", ' ');
+ 
+-	/*
+-	 * Color menu
+-	 */
+-	private JMenuItem f_levelsItem = new JMenuItem("Levels...", 'l');
+-	private JMenuItem f_curvesItem = new JMenuItem("Curves...", 'c');
+ 	private JMenuItem f_monProfItem = new JMenuItem("Set Monitor Profile...", 'm');
+-	private JMenuItem f_imageWSItem = new JMenuItem("Set Image Working Space...", 'i');
++	private JMenuItem f_imageWorkingSpaceItem = new JMenuItem("Set Image Working Space...", 'i');
++	private JMenuItem f_monGammaItem = new JMenuItem("Adjust Monitor Gamma", 'g');
+ 
+-	/*
+-	 * Raw menu
+-	 */
+ 	private JMenu f_rawMenu = new JMenu("Raw");
+-	private JMenuItem f_biasItem = new JMenuItem("Array Element Bias...", 'b');
+-	private JMenuItem f_interpItem = new JMenuItem("Interpolate", 'i');
+-
+-	// private JMenuItem f_rawExportItem = new JMenuItem("Export...", 'e');
+-	// private JMenuItem f_monGammaItem = new JMenuItem("Adjust Monitor Gamma", 'g');
+-	// private JMenuItem f_rawImportItem = new JMenuItem("Import...", 'i');
++	private JMenuItem f_rawImportItem = new JMenuItem("Import...", 'i');
++	private JMenuItem f_rawExportItem = new JMenuItem("Export...", 'e');
++	private JMenuItem f_rawInterpolateItem = new JMenuItem("Interpolate");
+ 
+ 	private final String f_prefsName = ".clearrc";
+ 	private Prefs f_prefs = null;
+ 
+-	private File f_workingDir = null;
+-
++	// public static final ColorModel DISPLAY_COLOR_MODEL = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
+ 	private String f_monProfilePath = null;
+ 	private String f_wsProfilePath = null;
+ 	private ICC_Profile f_monProfile = null;
+ 	private ICC_Profile f_wsProfile = null;
++	// private CME f_cme = CME.getInstance();
+ 
+-	/*
+-	 * Undo/Redo, current image, current temp image
+-	 */
+ 	private RasterStack f_undoStack = new RasterStack();
+ 	private RasterStack f_redoStack = new RasterStack();
+ 	private RawRaster f_rr = null;
+ 	private RawRaster f_rrtemp = null;
+-	private RawRaster f_srr = null;
++	private ColorPanel f_cp = new ColorPanel();
+ 
+-	/*
+-	 * Listeners...
+-	 */
+-	private Collection<BitDepthChangeListener> f_bdcls = new LinkedList<BitDepthChangeListener>();
+-
+-	/*
+-	 * Panels...
+-	 */
+-	private JScrollPane f_scroller;
+-	private JDesktopPane f_desktop;
+-	private JInternalFrame f_frame;
+-
+-	// public static final ColorModel DISPLAY_COLOR_MODEL = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
+-	// private CME f_cme = CME.getInstance();
+-
+-	// private ColorPanel f_cp = new ColorPanel();
+-	// private JFileChooser f_fileChooser = null;
+-
+-	// private CurvePanel f_curveR = null;
+-	// private CurvePanel f_curveG = null;
+-	// private CurvePanel f_curveB = null;
+-	// private CurvePanel f_curveComp = null;
+-	// private JTabbedPane f_curveTabs = null;
+-
+-	// private JSlider f_levelR = null;
+-	// private JSlider f_levelG = null;
+-	// private JSlider f_levelB = null;
+-	// private JSlider f_levelH = null;
+-	// private JPanel f_levelPanel = null;
++	private JTabbedPane f_curveTabs = null;
++	private CurvePanel f_curveR = null;
++	private CurvePanel f_curveG = null;
++	private CurvePanel f_curveB = null;
++	private CurvePanel f_curveComp = null;
+ 
+ 
+ 	public Main()
+@@ -114,24 +67,6 @@
+ 
+ 		f_loadPreferences();
+ 		f_initMenus();
+-		// f_initEditPanels();
+-
+-		FileChooserPanel fileChooser = new FileChooserPanel(f_workingDir);
+-		fileChooser.addListSelectionListener(this);
+-
+-		JPanel imagePanel = new JPanel();
+-		imagePanel.setLayout(new GridLayout(1,1));
+-		imagePanel.setBackground(Color.white);
+-		imagePanel.setPreferredSize(new Dimension(2000, 1000));
+-
+-		f_scroller = new JScrollPane(imagePanel);
+-
+-		f_desktop = new JDesktopPane();
+-		f_desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
+-
+-		JSplitPane splitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, false, fileChooser, f_desktop);
+-
+-		add(splitter);
+ 	}
+ 
+ 
+@@ -148,116 +83,44 @@
+ 	{
+ 		Object source = evt.getSource();
+ 
+-		/*
+-		 * File menu
+-		 */
+ 		if ( source == f_quitItem ) f_shutdown();
+-		else if ( source == f_newItem ) f_new();
+ 		else if ( source == f_openItem ) f_openDialog();
+ 		else if ( source == f_saveItem ) f_saveDialog();
+ 		else if ( source == f_saveAsItem ) f_saveAsDialog();
+ 
+-		/*
+-		 * Edit menu
+-		 */
+ 		else if ( source == f_redoItem ) f_redo();
+ 		else if ( source == f_undoItem ) f_undo();
+-		else if ( source == f_applyItem ) f_apply();
+ 
+-		/*
+-		 * Color menu
+-		 */
+-		else if ( source == f_levelsItem ) f_levelsDialog();
+-		else if ( source == f_curvesItem ) f_curvesDialog();
++		else if ( source == f_monGammaItem ) f_monGammaDialog();
+ 		else if ( source == f_monProfItem ) f_monProfDialog();
+-		else if ( source == f_imageWSItem ) f_imageWorkingSpaceDialog();
++		else if ( source == f_imageWorkingSpaceItem ) f_imageWorkingSpaceDialog();
+ 
+-		/*
+-		 * Raw menu
+-		 */
+-		else if ( source == f_biasItem ) { f_biasDialog(); }
+-		else if ( source == f_interpItem ) { f_interpolate(); }
++		else if ( source == f_rawImportItem ) f_rawImportDialog();
++		else if ( source == f_rawExportItem ) f_rawExportDialog();
+ 
+-		// else if ( source == f_rawExportItem ) f_rawExportDialog();
+-		// else if ( source == f_rawImportItem ) f_rawImportDialog();
++		else if ( source == f_rawInterpolateItem ) { f_interpolate(); }
+ 	}
+ 
+ 
+-	public void valueChanged ( ListSelectionEvent evt )
+-	{
+-		Object src = evt.getSource();
+-
+-		if ( ! evt.getValueIsAdjusting() )
+-		{
+-			if ( src instanceof JList )
+-			{
+-				JList list = (JList)src;
+-				Object obj = list.getSelectedValue();
+-
+-				if ( obj instanceof File )
+-				{
+-					File file = (File)obj;
+-
+-					if ( file.isFile() )
+-					{
+-						System.err.println("  Trying to import raw file: " + file + "...");
+-
+-						f_loadImage(file);
+-					}
+-				}
+-			}
+-		}
+-	}
+-
+-
+-	private void f_loadImage ( File file )
+-	{
+-		try
+-		{
+-			RawCodec codec = RawCodec.getInstance(file);
+-			CaptureData cd = codec.decode();
+-
+-			final int bits = cd.getBits();
+-
+-			f_rr = new RawRaster(cd);
+-			f_rr.setProfile(f_wsProfile);
+-
+-			f_rrtemp = null;
+-			f_undoStack.removeAllElements();
+-			f_redoStack.removeAllElements();
+-
+-			fireBitDepthChangeEvent(cd, bits);
+-
+-			f_frame = new JInternalFrame(file.getPath());
+-			f_desktop.add(f_frame);
+-
+-			f_displayImage();
+-		}
+-		catch ( Exception e ) { e.printStackTrace(); f_shutdown(); }
+-	}
+-
+-
+-	public void addBitDepthChangeListener ( BitDepthChangeListener l ) { f_bdcls.add(l); }
+-	public void fireBitDepthChangeEvent ( Object source, int bits ) { System.out.println("  bit depth change: " + bits); Iterator iter = f_bdcls.iterator(); while ( iter.hasNext() ) ((BitDepthChangeListener)iter.next()).updateBits(source, bits); }
+-
+-
+ 	public void applyLUT ( Object source, LUT lut )
+ 	{
+-		if ( f_rr == null )
+-			return;
+-
+ 		if ( f_rrtemp == null )
+-			f_rrtemp = f_rr.createCopy();
++			f_rrtemp = f_rr.createBlankCopy();
+ 
+-		f_rr.applyLUT(lut, f_rrtemp);
++		if ( source == f_curveR )
++			f_rr.applyLUT(lut, R, f_rrtemp);
++		else if ( source == f_curveG )
++			f_rr.applyLUT(lut, G, f_rrtemp);
++		else if ( source == f_curveB )
++			f_rr.applyLUT(lut, B, f_rrtemp);
++		else if ( source == f_curveComp )
++			f_rr.applyLUT(lut, f_rrtemp);
+ 
++		// f_rr.applyLUT(lut, f_rrtemp);
+ 		f_displayImage(f_rrtemp);
+ 	}
+ 
+ 
+-	public void subrasterSelected ( Object source, RawRaster rr ) { System.out.println("Main.subrasterSelected()"); f_srr = rr; }
+-
+-
+ 	public void windowClosing( WindowEvent evt ) { f_shutdown(); }
+ 	public void windowClosed ( WindowEvent evt ) { f_shutdown(); }
+ 	public void windowOpened ( WindowEvent evt ) {}
+@@ -295,8 +158,6 @@
+ 			String wsPath = wsPrefix + File.separator + wsName;
+ 			String monPath = monPrefix + File.separator + monName;
+ 
+-			String wdPath = f_prefs.get("Directories", "Default Image Directory");
+-
+ 			f_wsProfilePath = wsPath;
+ 			f_monProfilePath = monPath;
+ 
+@@ -306,8 +167,6 @@
+ 			f_wsProfile = ICC_Profile.getInstance(f_wsProfilePath);
+ 			f_monProfile = ICC_Profile.getInstance(f_monProfilePath);
+ 
+-			f_workingDir = new File(wdPath);
+-
+ 			// f_cme.initDeviceLink(wsPath, monPath);
+ 		}
+ 		catch ( Exception e ) { e.printStackTrace(); System.exit(1); }
+@@ -318,65 +177,57 @@
+ 	{
+ 		JMenu fileMenu = new JMenu("File");
+ 		fileMenu.setMnemonic('f');
+-		fileMenu.add(f_newItem);
+ 		fileMenu.add(f_openItem);
+ 		fileMenu.add(f_saveItem);
+ 		fileMenu.add(f_saveAsItem);
+ 		fileMenu.addSeparator();
+ 		fileMenu.add(f_quitItem);
+ 
+-		f_newItem.addActionListener(this);
++		// fileMenu.add(f_newItem);
++		// f_newItem.addActionListener(this);
++		// f_newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
++
+ 		f_openItem.addActionListener(this);
++		f_openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+ 		f_saveItem.addActionListener(this);
++		f_saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+ 		f_saveAsItem.addActionListener(this);
+ 		f_quitItem.addActionListener(this);
+-
+-		f_newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
+-		f_openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+-		f_saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+ 		f_quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+ 
+ 		JMenu editMenu = new JMenu("Edit");
+ 		editMenu.setMnemonic('e');
+ 		editMenu.add(f_redoItem);
+ 		editMenu.add(f_undoItem);
+-		editMenu.addSeparator();
+-		editMenu.add(f_applyItem);
+ 
+ 		f_redoItem.addActionListener(this);
+-		f_undoItem.addActionListener(this);
+-		f_applyItem.addActionListener(this);
+-
+ 		f_redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
+-		f_undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+-		f_applyItem.setAccelerator(KeyStroke.getKeyStroke(' ')); // KeyEvent.VK_Z, InputEvent.CTRL_MASK));
++		f_undoItem.addActionListener(this);
++		f_undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+ 
+ 		JMenu colorMenu = new JMenu("Color");
+ 		colorMenu.setMnemonic('c');
+-		colorMenu.add(f_levelsItem);
+-		colorMenu.add(f_curvesItem);
+-		colorMenu.addSeparator();
+ 		colorMenu.add(f_monProfItem);
+-		colorMenu.add(f_imageWSItem);
++		colorMenu.add(f_imageWorkingSpaceItem);
++		colorMenu.addSeparator();
++		colorMenu.add(f_monGammaItem);
+ 
+-		f_levelsItem.addActionListener(this);
+-		f_curvesItem.addActionListener(this);
+ 		f_monProfItem.addActionListener(this);
+-		f_imageWSItem.addActionListener(this);
++		f_imageWorkingSpaceItem.addActionListener(this);
++		f_monGammaItem.addActionListener(this);
+ 
+-		f_levelsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
+-		f_curvesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
++		// f_monGammaItem.setAccelerator(KeyStroke.getKeyStroke('g')); // KeyEvent.VK_G, InputEvent.CTRL_MASK));
+ 
+-		f_rawMenu.setEnabled(false);
+ 		f_rawMenu.setMnemonic('r');
+-		f_rawMenu.add(f_biasItem);
+-		f_rawMenu.add(f_interpItem);
+-
+-		f_biasItem.addActionListener(this);
+-		f_interpItem.addActionListener(this);
+-
+-		f_biasItem.setAccelerator(KeyStroke.getKeyStroke('b')); // KeyEvent.VK_B, InputEvent.CTRL_MASK));
+-		f_interpItem.setAccelerator(KeyStroke.getKeyStroke('i')); // KeyEvent.VK_I, InputEvent.CTRL_MASK));
++		f_rawMenu.add(f_rawImportItem);
++		f_rawMenu.add(f_rawExportItem);
++		f_rawMenu.add(f_rawInterpolateItem);
++
++		f_rawImportItem.addActionListener(this);
++		f_rawExportItem.addActionListener(this);
++		f_rawInterpolateItem.addActionListener(this);
++		
++		f_rawInterpolateItem.setAccelerator(KeyStroke.getKeyStroke('i')); // KeyEvent.VK_I, InputEvent.CTRL_MASK));
+ 
+ 		JMenu spacerMenu = new JMenu();
+ 		spacerMenu.setEnabled(false);
+@@ -389,166 +240,28 @@
+ 		menuBar.add(f_rawMenu);
+ 
+ 		setJMenuBar(menuBar);
+-
+-		// f_monGammaItem.addActionListener(this);
+-		// f_rawMenu.add(f_rawExportItem);
+-		// colorMenu.add(f_monGammaItem);
+-		// f_monGammaItem.setAccelerator(KeyStroke.getKeyStroke('g')); // KeyEvent.VK_G, InputEvent.CTRL_MASK));
+-		// f_undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+-		// f_undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.getKeyChar(KeyEvent.VK_ESCAPE))); // KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+-		// f_rawMenu.add(f_rawImportItem);
+-		// f_rawExportItem.addActionListener(this);
+-		// f_rawImportItem.addActionListener(this);
+-	}
+-
+-
+-	private void f_initEditPanels()
+-	{
+-		// JPanel dirPanel = new FileListPanel(f_workingDir, FileListPanel.DIRS);
+-		// JPanel filePanel = new FileListPanel(f_workingDir);
+-		FileChooserPanel fileChooser = new FileChooserPanel(f_workingDir);
+-		fileChooser.addListSelectionListener(this);
+-
+-		final int bits = 8;
+-
+-		CurvePanel curveR = new CurvePanel(R, bits);
+-		CurvePanel curveG = new CurvePanel(G, bits);
+-		CurvePanel curveB = new CurvePanel(B, bits);
+-		// CurvePanel curveComp = new CurvePanel(ALL_MASK, bits);
+-
+-		curveR.addLUTChangeListener(this);
+-		curveG.addLUTChangeListener(this);
+-		curveB.addLUTChangeListener(this);
+-		// curveComp.addLUTChangeListener(this);
+-
+-		JTabbedPane curveTabs = new JTabbedPane();
+-		curveTabs.add("Red", curveR);
+-		curveTabs.add("Green", curveG);
+-		curveTabs.add("Blue", curveB);
+-		// curveTabs.add("<All>", curveComp);
+-
+-		JPanel curvePanel = new EtchedTitledPanel("Curves");
+-		curvePanel.add(curveTabs);
+-
+-		LevelSliderPanel levelR = new LevelSliderPanel(R, bits);
+-		LevelSliderPanel levelG = new LevelSliderPanel(G, bits);
+-		LevelSliderPanel levelB = new LevelSliderPanel(B, bits);
+-		LevelSliderPanel levelH = new LevelSliderPanel(H, bits);
+-
+-		levelR.addLUTChangeListener(this);
+-		levelG.addLUTChangeListener(this);
+-		levelB.addLUTChangeListener(this);
+-		levelH.addLUTChangeListener(this);
+-
+-		addBitDepthChangeListener(curveR);
+-		addBitDepthChangeListener(curveG);
+-		addBitDepthChangeListener(curveB);
+-		// addBitDepthChangeListener(curveComp);
+-		addBitDepthChangeListener(levelR);
+-		addBitDepthChangeListener(levelG);
+-		addBitDepthChangeListener(levelB);
+-		addBitDepthChangeListener(levelH);
+-
+-		JPanel levelPanel = new EtchedTitledPanel("Linear Detector Bias");
+-		levelPanel.setLayout(new GridLayout(1, 4));
+-		levelPanel.add(levelR);
+-		levelPanel.add(levelG);
+-		levelPanel.add(levelB);
+-		levelPanel.add(levelH);
+-
+-		GridBagLayout bag = new GridBagLayout();
+-		GridBagConstraints gc = new GridBagConstraints();
+-		JPanel editPanel = new JPanel();
+-
+-		/*
+-		editPanel.setBorder(new EmptyBorder(10,10,10,10));
+-		// editPanel.setBackground(SWING_BLUE);
+-		editPanel.setLayout(bag);
+-
+-		gc.fill = GridBagConstraints.BOTH;
+-		gc.gridwidth = 1;
+-		gc.weightx = 1;
+-		gc.weighty = 1;
+-		gc.gridx = 0; // GridBagConstraints.RELATIVE;
+-		gc.gridy = 0; // GridBagConstraints.RELATIVE;
+-		bag.setConstraints(fileChooser, gc);
+-		// gc.gridx = 1;
+-		// bag.setConstraints(filePanel, gc);
+-
+-		// gc.gridx = 0;
+-		gc.gridy = 1; // GridBagConstraints.RELATIVE;
+-		// gc.gridwidth = 2;
+-		bag.setConstraints(levelPanel, gc);
+-
+-		gc.gridy = 2; // GridBagConstraints.RELATIVE;
+-		bag.setConstraints(curvePanel, gc);
+-		*/
+-
+-		// editPanel.setLayout(new GridLayout(3,1));
+-		editPanel.setLayout(new BoxLayout(editPanel, BoxLayout.Y_AXIS));
+-
+-		// editPanel.add(dirPanel);
+-		// editPanel.add(filePanel);
+-		// editPanel.add(new JPanel());
+-		editPanel.add(fileChooser);
+-		editPanel.add(curvePanel);
+-		editPanel.add(levelPanel);
+-
+-		JPanel imagePanel = new JPanel();
+-		imagePanel.setLayout(new GridLayout(1,1));
+-		imagePanel.setBackground(Color.white);
+-		imagePanel.setPreferredSize(new Dimension(2000, 1000));
+-
+-		f_scroller = new JScrollPane(imagePanel);
+-
+-		JPanel content = new JPanel();
+-		content.setLayout(new BorderLayout());
+-		content.add(editPanel, BorderLayout.WEST);
+-		content.add(f_scroller, BorderLayout.CENTER);
+-
+-		add(content);
+-		// setContentPane(content);
+ 	}
+ 
+ 
+-	private void f_apply() { if ( f_rrtemp != null ) { if ( f_rrtemp == null ) return; f_push(); f_rr = f_rrtemp; f_rrtemp = null; } }
+-	private void f_interpolate() { if ( f_rr == null ) return; try { f_push(); f_rr = f_rr.createCopy(); f_rr.interpolate(ALL_MASK); f_displayImage(); } catch ( Exception e ) { e.printStackTrace(); System.exit(1); } }
++	private void f_undo() { f_redoStack.push(f_undoStack.pop()); f_rr = f_undoStack.peek(); f_displayImage(); }
++	private void f_redo() { f_undoStack.push(f_redoStack.pop()); f_rr = f_undoStack.peek(); f_displayImage(); }
+ 
+ 
+-	private void f_push() { f_undoStack.push(f_rr); }
+-	private void f_undo() { if ( f_undoStack.empty() ) return; f_redoStack.push(f_rr); f_rr = f_undoStack.pop(); f_displayImage(); }
+-	private void f_redo() { if ( f_redoStack.empty() ) return; f_undoStack.push(f_rr); f_rr = f_redoStack.pop(); f_displayImage(); }
+-
+-
+-	private void f_displayImage ( RawRaster raster )
++	private void f_interpolate()
+ 	{
+-		// raster = f_colorConvert(raster);
+-
+-		ColorPanel cp = new ColorPanel();
+-		cp.addRawRasterSelectionListener(this);
+-		cp.setRawRaster(raster);
+-
+-		// JScrollPanel scroller = new JScrollPane(cp);
+-		// JViewport vp = scroller.getViewport();
+-
+-		JViewport vp = f_scroller.getViewport();
+-
+-		Point save = vp.getViewPosition();
+-		vp.setView(cp);
+-		vp.setViewPosition(save);
+-
+-		// f_scroller.repaint();
++		if ( f_rr == null )
++			return;
+ 
+-		f_frame.add(f_scroller);
+-		try { f_frame.setMaximum(true); } catch ( Exception e ) {}
+-		f_frame.setVisible(true);
++		try
++		{
++			f_rr.interpolate(INTERP_R_MASK);
++			f_rr.interpolate(INTERP_G_MASK);
++			f_rr.interpolate(INTERP_H_MASK);
++			f_rr.interpolate(INTERP_B_MASK);
++			f_displayImage();
++		}
++		catch ( Exception e ) { e.printStackTrace(); System.exit(1); }
+ 	}
+-	private void f_displayImage() { f_displayImage(f_rr); }
+-
+-
+-	private void f_levelsDialog() { System.out.println("  Adjusting levels..."); }
+-	private void f_curvesDialog() { System.out.println("  Adjusting curves..."); }
+-	private void f_biasDialog() { System.out.println("  Adjusting levels..."); }
+ 
+ 
+ 	private void f_monProfDialog()
+@@ -567,6 +280,14 @@
+ 
+ 		f_monProfilePath = filename;
+ 	}
++
++
++	private void f_monGammaDialog()
++	{
++		System.err.println("Adjusting monitor gamma!");
++	}
++
++
+ 	private void f_imageWorkingSpaceDialog()
+ 	{
+ 		JFileChooser dialog = new JFileChooser(".");
+@@ -585,26 +306,92 @@
+ 	}
+ 
+ 
+-	private void f_new()
++	private void f_displayImage()
+ 	{
+-		if ( f_srr == null )
+-			return;
++		try
++		{
++			RawRaster rr = f_undoStack.peek();
++			f_displayImage(rr);
++		}
++		catch ( EmptyStackException e ) { System.err.println("EmptyStackException thrown; returning."); return; }
+ 
+-		ICC_Profile profile = f_rr.getProfile();
++	}
++	private void f_displayImage ( RawRaster raster )
++	{
++		raster = f_colorConvert(raster);
+ 
+-		f_rr = f_srr;
+-		f_rr.setProfile(profile);
++		f_cp.setRawRaster(raster);
++		JScrollPane scroller = new JScrollPane(f_cp);
+ 
+-		f_rrtemp = null;
+-		f_srr = null;
++		java.awt.Container content = scroller;
+ 
+-		f_undoStack.removeAllElements();
+-		f_redoStack.removeAllElements();
++		if ( f_curveR != null  &&  f_curveG != null  &&  f_curveB != null  &&  f_curveComp != null )
++		{
++			content = new JPanel();
++			content.setLayout(new BorderLayout());
++			content.add(f_curveTabs, BorderLayout.WEST);
++			content.add(scroller, BorderLayout.CENTER);
++		}
+ 
+-		fireBitDepthChangeEvent(f_rr, f_rr.getBits());
++		setContentPane(content);
+ 
+-		f_displayImage();
++		validate();
+ 	}
++
++
++		/*
++		TiledImage image = new TiledImage(0, 0, raster.getWidth(), raster.getHeight(), 0, 0, raster.getSampleModel(), DISPLAY_COLOR_MODEL);
++		image.setData(raster);
++
++		ImageLayout layout = new ImageLayout(image);
++		layout.setTileWidth(200);
++		layout.setTileHeight(150);
++		RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
++		ParameterBlock pb = new ParameterBlock();
++		pb.addSource(image);
++
++		RenderedOp op = JAI.create("format", pb, hints);
++
++		BufferedImage image = new BufferedImage(CMS.COLOR_MODEL, raster, false, null);
++
++		JPanel panel = new ImagePanel(op);
++		*/
++
++
++	private RawRaster f_colorConvert ( RawRaster src )
++	{
++		// if ( f_cme == null )
++		// return src;
++
++		/*
++		try
++		{
++			final int width = src.getWidth();
++			final int height = src.getHeight();
++
++			DataBufferUShort sdb = (DataBufferUShort)src.getDataBuffer();
++			final int numBanks = sdb.getNumBanks();
++			final int size = sdb.getSize();
++			short[] input = new short[numBanks * size];
++
++			for ( int i = 0; i < numBanks; ++i )
++				System.arraycopy(sdb.getData(0), 0, input, i * size, size);
++
++			DataBufferInt idb = new DataBufferInt(size);
++			int[] output = idb.getData();
++
++			f_cme.colorConvert(input, size, output);
++
++			SampleModel sm = DISPLAY_COLOR_MODEL.createCompatibleSampleModel(width, height);
++			return Raster.createWritableRaster(sm, idb, new Point(0,0));
++		}
++		catch ( Exception e ) { e.printStackTrace(); System.err.println(1); }
++		*/
++
++		return src;
++	}
++
++
+ 	private void f_openDialog()
+ 	{
+ 		if ( f_wsProfilePath == null )
+@@ -643,6 +430,61 @@
+ 			 */
+ 			// f_rr = f_rr.get3ColorRGBRaster();
+ 
++			f_undoStack.push(f_rr);
++
++			f_displayImage();
++		}
++		catch ( Exception e ) { e.printStackTrace(); f_shutdown(); }
++	}
++
++
++	private void f_rawImportDialog()
++	{
++		if ( f_wsProfilePath == null )
++			f_imageWorkingSpaceDialog();
++
++		JFileChooser dialog = new JFileChooser(".");
++
++		int status = dialog.showOpenDialog(this);
++
++		if ( status != JFileChooser.APPROVE_OPTION )
++			return;
++
++		final File file = dialog.getSelectedFile();
++		final String filename = file.getPath();
++
++		System.err.println("Opening " + filename + "...");
++
++		try
++		{
++			RawCodec codec = RawCodec.getInstance(file);
++			CaptureData cd = codec.decode();
++
++			f_rr = new RawRaster(cd);
++			f_rr.setProfile(f_wsProfile);
++
++			f_curveR = new CurvePanel(f_rr.getBits());
++			f_curveR.addLUTChangeListener(this);
++			f_curveG = new CurvePanel(f_rr.getBits());
++			f_curveG.addLUTChangeListener(this);
++			f_curveB = new CurvePanel(f_rr.getBits());
++			f_curveB.addLUTChangeListener(this);
++			f_curveComp = new CurvePanel(f_rr.getBits());
++			f_curveComp.addLUTChangeListener(this);
++
++			f_curveTabs = new JTabbedPane();
++			f_curveTabs.add("Red", f_curveR);
++			f_curveTabs.add("Green", f_curveG);
++			f_curveTabs.add("Blue", f_curveB);
++			f_curveTabs.add("<All>", f_curveComp);
++
++			/*
++			 * CMS change.
++			 */
++			// f_rr = f_rr.get3ColorRGBRaster();
++
++			f_undoStack.push(f_rr);
++
+ 			f_displayImage();
+ 		}
+ 		catch ( Exception e ) { e.printStackTrace(); f_shutdown(); }
+@@ -700,7 +542,7 @@
+ 	}
+ 
+ 
+-	private void f_shutdown() { /* if ( f_cme != null ) { try { f_cme.dispose(); } catch ( Exception e ) { e.printStackTrace(); } } */ dispose(); System.exit(0); }
++	private void f_shutdown() { /* if ( f_cme != null ) { try { f_cme.dispose(); } catch ( Exception e ) { e.printStackTrace(); } } */ System.exit(0); }
+ 
+ 
+ 	/*
+@@ -716,63 +558,9 @@
+ 	{
+ 		Main app = new Main();
+ 
+-		app.setSize(2048, 2048);
+-		Methods.centerWindow(app);
++		// Methods.centerWindow(app);
+ 
+-		// app.pack();
++		app.pack();
+ 		app.setVisible(true);
+ 	}
+-
+-
+-		/*
+-		TiledImage image = new TiledImage(0, 0, raster.getWidth(), raster.getHeight(), 0, 0, raster.getSampleModel(), DISPLAY_COLOR_MODEL);
+-		image.setData(raster);
+-
+-		ImageLayout layout = new ImageLayout(image);
+-		layout.setTileWidth(200);
+-		layout.setTileHeight(150);
+-		RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout);
+-		ParameterBlock pb = new ParameterBlock();
+-		pb.addSource(image);
+-
+-		RenderedOp op = JAI.create("format", pb, hints);
+-
+-		BufferedImage image = new BufferedImage(CMS.COLOR_MODEL, raster, false, null);
+-
+-		JPanel panel = new ImagePanel(op);
+-		*/
+-
+-
+-	private RawRaster f_colorConvert ( RawRaster src )
+-	{
+-		// if ( f_cme == null )
+-		// return src;
+-
+-		/*
+-		try
+-		{
+-			final int width = src.getWidth();
+-			final int height = src.getHeight();
+-
+-			DataBufferUShort sdb = (DataBufferUShort)src.getDataBuffer();
+-			final int numBanks = sdb.getNumBanks();
+-			final int size = sdb.getSize();
+-			short[] input = new short[numBanks * size];
+-
+-			for ( int i = 0; i < numBanks; ++i )
+-				System.arraycopy(sdb.getData(0), 0, input, i * size, size);
+-
+-			DataBufferInt idb = new DataBufferInt(size);
+-			int[] output = idb.getData();
+-
+-			f_cme.colorConvert(input, size, output);
+-
+-			SampleModel sm = DISPLAY_COLOR_MODEL.createCompatibleSampleModel(width, height);
+-			return Raster.createWritableRaster(sm, idb, new Point(0,0));
+-		}
+-		catch ( Exception e ) { e.printStackTrace(); System.err.println(1); }
+-		*/
+-
+-		return src;
+-	}
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./CaptureData.java	2012-02-28 04:18:15.000000000 -0800
++++ ./CaptureData.java	2012-02-28 04:18:15.000000000 -0800
+@@ -71,7 +71,7 @@
+ 	3 G R G R G R	3 B G B G B G	3 R G R G R G	3 G B G B G B
+ </pre>
+ */
+-public class CaptureData extends ImageData
++public class CaptureData extends ImageData implements Const
+ {
+ 	private ImageInfo f_info;
+ 	private ColorFilterArray f_cfa;
+@@ -84,38 +84,29 @@
+ 		f_cfa = ColorFilterArray.getInstance(filterSpec);
+ 	}
+ 	/*
+-	public CaptureData ( int width, int height, ColorFilterArray cfa, int bits )
++	public CaptureData ( int width, int height, int bandCount, ColorFilterArray cfa, int bits )
+ 	{
+-		super(width, height, bits);
++		super(width, height, bandCount, bits);
+ 
+ 		f_cfa = cfa;
+ 	}
+-	*/
+-	public CaptureData ( ImageData id, ColorFilterArray cfa )
++	protected CaptureData ( CaptureData cd )
+ 	{
+-		super(id);
+-		f_cfa = cfa;
++		super(cd);
+ 
+-		setData(id.f_a);
++		f_info = cd.f_info;
++		f_cfa = cd.f_cfa;
+ 	}
++	*/
+ 
+ 
+ 	public ColorFilterArray getCFA() { return f_cfa; }
++
++
+ 	public ImageInfo getImageInfo() { return f_info; }
+ 	public void setImageInfo ( ImageInfo info ) { f_info = info; }
+ 
+ 
+ 	public BandIterator[] bandIterators() { return f_cfa.bandIterators(this); }
+ 	public AreaBandIterator[] areaBandIterators ( int radius ) { return f_cfa.areaBandIterators(this, radius); }
+-
+-
+-	public CaptureData subraster ( int x, int y )
+-	{
+-		return subraster(subset(x, y), x, y);
+-	}
+-	public CaptureData subraster ( int x, int y, int width, int height )
+-	{
+-		return subraster(subset(x, y, width, height), x, y);
+-	}
+-	private CaptureData subraster ( ImageData id, int x, int y ) { return new CaptureData(id, f_cfa.arrayAtOffset(x,y)); }
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./cfa/BayerCFA.java	2012-02-28 04:18:15.000000000 -0800
++++ ./cfa/BayerCFA.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,10 +1,9 @@
+ package com.crinqle.dlroom.cfa;
+ 
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ 
+ 
+-class BayerCFA extends ColorFilterArray
++class BayerCFA extends ColorFilterArray implements Const
+ {
+ 	BayerCFA ( int filterSpec )
+ 	{
+@@ -14,139 +13,78 @@
+ 	}
+ 
+ 
+-	public AreaBandIterator[] areaBandIterators ( ImageData id, int radius )
++	public Interpolation interpolation ( RawRaster rr )
+ 	{
+-		switch ( f_fs )
+-		{
+-		    case FILTER_BGGR:
+-			    f_abis[B] = new BayerAreaBandIterator(id, 0,0, radius);
+-			    f_abis[H] = new BayerAreaBandIterator(id, 1,0, radius);
+-			    f_abis[G] = new BayerAreaBandIterator(id, 0,1, radius);
+-			    f_abis[R] = new BayerAreaBandIterator(id, 1,1, radius);
+-			    break;
+-
+-		    case FILTER_GRBG:
+-			    f_abis[G] = new BayerAreaBandIterator(id, 0,0, radius);
+-			    f_abis[R] = new BayerAreaBandIterator(id, 1,0, radius);
+-			    f_abis[B] = new BayerAreaBandIterator(id, 0,1, radius);
+-			    f_abis[H] = new BayerAreaBandIterator(id, 1,1, radius);
+-			    break;
+-
+-		    case FILTER_GBRG:
+-			    f_abis[H] = new BayerAreaBandIterator(id, 0,0, radius);
+-			    f_abis[B] = new BayerAreaBandIterator(id, 1,0, radius);
+-			    f_abis[G] = new BayerAreaBandIterator(id, 0,1, radius);
+-			    f_abis[R] = new BayerAreaBandIterator(id, 1,1, radius);
+-			    break;
+-
+-		    case FILTER_RGGB:
+-			    f_abis[R] = new BayerAreaBandIterator(id, 0,0, radius);
+-			    f_abis[G] = new BayerAreaBandIterator(id, 1,0, radius);
+-			    f_abis[H] = new BayerAreaBandIterator(id, 0,1, radius);
+-			    f_abis[B] = new BayerAreaBandIterator(id, 1,1, radius);
+-			    break;
+-		}
+-
+-		return f_abis;
++		return new BayerVNG(rr);
+ 	}
+ 
+ 
+-	/**
+-	 * Returns a new BayerCFA based on the specified offsets.
+-	 * Negative values are okay, because the array doesn't know
+-	 * about the raster.
+-	 *
+-	 * @param dx X-axis offset from the origin.
+-	 * @param dy Y-axis offset from the origin.
+-	 */
+-	public ColorFilterArray arrayAtOffset ( int dx, int dy )
++	public BandIterator[] bandIterators ( ImageData id )
+ 	{
+-		final int xmod = dx % 2;
+-		final int ymod = dy % 2;
+-
+-		if ( xmod == 0  &&  ymod == 0 )
+-			return new BayerCFA(f_fs);
+-
+-		BayerCFA cfa = null;
+-
+ 		switch ( f_fs )
+ 		{
+ 		    case FILTER_BGGR:
+-			    if ( xmod == 1  &&  ymod == 0 )
+-				    cfa = new BayerCFA(FILTER_GBRG);
+-			    else if ( xmod == 0  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_GRBG);
+-			    else if ( xmod == 1  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_RGGB);
++			    f_bis[R] = new BayerBandIterator(id, 1,1, 1,3, 2,2);
++			    f_bis[G] = new BayerBandIterator(id, 1,0, 0,1, 2,1);
++			    f_bis[B] = new BayerBandIterator(id, 0,0, 0,2, 2,2);
+ 			    break;
+ 
+ 		    case FILTER_GRBG:
+-			    if ( xmod == 1  &&  ymod == 0 )
+-				    cfa = new BayerCFA(FILTER_RGGB);
+-			    else if ( xmod == 0  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_BGGR);
+-			    else if ( xmod == 1  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_GBRG);
++			    f_bis[R] = new BayerBandIterator(id, 1,0, 1,2, 2,2);
++			    f_bis[G] = new BayerBandIterator(id, 0,0, 1,1, 2,1);
++			    f_bis[B] = new BayerBandIterator(id, 0,1, 0,3, 2,2);
+ 			    break;
+ 
+ 		    case FILTER_GBRG:
+-			    if ( xmod == 1  &&  ymod == 0 )
+-				    cfa = new BayerCFA(FILTER_BGGR);
+-			    else if ( xmod == 0  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_RGGB);
+-			    else if ( xmod == 1  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_GRBG);
++			    f_bis[R] = new BayerBandIterator(id, 0,1, 0,3, 2,2);
++			    f_bis[G] = new BayerBandIterator(id, 0,0, 1,1, 2,1);
++			    f_bis[B] = new BayerBandIterator(id, 1,0, 1,2, 2,2);
+ 			    break;
+ 
+ 		    case FILTER_RGGB:
+-			    if ( xmod == 1  &&  ymod == 0 )
+-				    cfa = new BayerCFA(FILTER_GRBG);
+-			    else if ( xmod == 0  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_GBRG);
+-			    else if ( xmod == 1  &&  ymod == 1 )
+-				    cfa = new BayerCFA(FILTER_BGGR);
++			    f_bis[R] = new BayerBandIterator(id, 0,0, 0,2, 2,2);
++			    f_bis[G] = new BayerBandIterator(id, 1,0, 0,1, 2,1);
++			    f_bis[B] = new BayerBandIterator(id, 1,1, 1,3, 2,2);
+ 			    break;
+ 		}
+ 
+-		return cfa;
++		return f_bis;
+ 	}
+ 
+ 
+-	public BandIterator[] bandIterators ( ImageData id )
++	public AreaBandIterator[] areaBandIterators ( ImageData id, int radius )
+ 	{
+ 		switch ( f_fs )
+ 		{
+ 		    case FILTER_BGGR:
+-			    f_bis[R] = new BayerBandIterator(id, 1,1, 1,3, 2,2);
+-			    f_bis[G] = new BayerBandIterator(id, 1,0, 0,1, 2,1);
+-			    f_bis[B] = new BayerBandIterator(id, 0,0, 0,2, 2,2);
++			    f_abis[B] = new BayerAreaBandIterator(id, 0,0, radius);
++			    f_abis[H] = new BayerAreaBandIterator(id, 1,0, radius);
++			    f_abis[G] = new BayerAreaBandIterator(id, 0,1, radius);
++			    f_abis[R] = new BayerAreaBandIterator(id, 1,1, radius);
+ 			    break;
+ 
+ 		    case FILTER_GRBG:
+-			    f_bis[R] = new BayerBandIterator(id, 1,0, 1,2, 2,2);
+-			    f_bis[G] = new BayerBandIterator(id, 0,0, 1,1, 2,1);
+-			    f_bis[B] = new BayerBandIterator(id, 0,1, 0,3, 2,2);
++			    f_abis[G] = new BayerAreaBandIterator(id, 0,0, radius);
++			    f_abis[R] = new BayerAreaBandIterator(id, 1,0, radius);
++			    f_abis[B] = new BayerAreaBandIterator(id, 0,1, radius);
++			    f_abis[H] = new BayerAreaBandIterator(id, 1,1, radius);
+ 			    break;
+ 
+ 		    case FILTER_GBRG:
+-			    f_bis[R] = new BayerBandIterator(id, 0,1, 0,3, 2,2);
+-			    f_bis[G] = new BayerBandIterator(id, 0,0, 1,1, 2,1);
+-			    f_bis[B] = new BayerBandIterator(id, 1,0, 1,2, 2,2);
++			    f_abis[H] = new BayerAreaBandIterator(id, 0,0, radius);
++			    f_abis[B] = new BayerAreaBandIterator(id, 1,0, radius);
++			    f_abis[G] = new BayerAreaBandIterator(id, 0,1, radius);
++			    f_abis[R] = new BayerAreaBandIterator(id, 1,1, radius);
+ 			    break;
+ 
+ 		    case FILTER_RGGB:
+-			    f_bis[R] = new BayerBandIterator(id, 0,0, 0,2, 2,2);
+-			    f_bis[G] = new BayerBandIterator(id, 1,0, 0,1, 2,1);
+-			    f_bis[B] = new BayerBandIterator(id, 1,1, 1,3, 2,2);
++			    f_abis[R] = new BayerAreaBandIterator(id, 0,0, radius);
++			    f_abis[G] = new BayerAreaBandIterator(id, 1,0, radius);
++			    f_abis[H] = new BayerAreaBandIterator(id, 0,1, radius);
++			    f_abis[B] = new BayerAreaBandIterator(id, 1,1, radius);
+ 			    break;
+ 		}
+ 
+-		return f_bis;
+-	}
+-
+-
+-	public Interpolation interpolation ( RawRaster rr )
+-	{
+-		return new BayerVNG(rr);
++		return f_abis;
+ 	}
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./cfa/BayerVNG.java	2012-02-28 04:18:15.000000000 -0800
++++ ./cfa/BayerVNG.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,10 +1,9 @@
+ package com.crinqle.dlroom.cfa;
+ 
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ 
+ 
+-public class BayerVNG implements Interpolation
++public class BayerVNG implements Const, Interpolation
+ {
+ 	private final static int N = 0;
+ 	private final static int S = 1;
+@@ -43,7 +42,7 @@
+ 	{
+ 		f_mask = mask;
+ 
+-		if ( (f_mask & ALL_MASK) == ALL_MASK )
++		if ( (f_mask & INTERP_ALL_MASK) == INTERP_ALL_MASK )
+ 		{
+ 			System.err.println("  Doing all-channel interpolation...debugging unset.");
+ 			setDebug(false);
+@@ -51,13 +50,13 @@
+ 
+ 		System.out.println("    f_mask: " + f_mask);
+ 
+-		if ( (f_mask & R_MASK) == R_MASK )
++		if ( (f_mask & INTERP_R_MASK) == INTERP_R_MASK )
+ 			interpolateR();
+-		if ( (f_mask & G_MASK) == G_MASK )
++		if ( (f_mask & INTERP_G_MASK) == INTERP_G_MASK )
+ 			interpolateG();
+-		if ( (f_mask & H_MASK) == H_MASK )
++		if ( (f_mask & INTERP_H_MASK) == INTERP_H_MASK )
+ 			interpolateH();
+-		if ( (f_mask & B_MASK) == B_MASK )
++		if ( (f_mask & INTERP_B_MASK) == INTERP_B_MASK )
+ 			interpolateB();
+ 	}
+ 
+@@ -675,11 +674,6 @@
+ 	}
+ 
+ 
+-	/* **************************************************
+-	 *
+-	 * Driver
+-	 *
+-	 */
+ 	public static void main ( String[] args )
+ 	{
+ 		RawRaster[][] rra = dlroom.test.InterpProf.createImages(args);
+@@ -733,7 +727,7 @@
+ 
+ class BayerVNGFrame extends javax.swing.JFrame implements javax.swing.event.ChangeListener
+ {
+-	private java.util.List<javax.swing.JViewport> f_list = new java.util.LinkedList<javax.swing.JViewport>();
++	private java.util.List f_list = new java.util.LinkedList();
+ 
+ 
+ 	BayerVNGFrame()
+@@ -762,13 +756,52 @@
+ 			return;
+ 
+ 		java.awt.Point point = viewport.getViewPosition();
++		java.util.Iterator i = f_list.iterator();
+ 
+-		for ( javax.swing.JViewport vp : f_list )
++		while ( i.hasNext() )
+ 		{
+-			java.awt.Point p = vp.getViewPosition();
++			Object o = i.next();
+ 
+-			if ( p.y != point.y  ||  p.x != point.x )
+-				vp.setViewPosition(point);
++			if ( o instanceof javax.swing.JViewport )
++			{
++				javax.swing.JViewport vp = (javax.swing.JViewport)o;
++				java.awt.Point p = vp.getViewPosition();
++
++				if ( p.y != point.y  ||  p.x != point.x )
++					vp.setViewPosition(point);
++			}
+ 		}
+ 	}
+ }
++
++
++
++/*
++  switch ( f_mask )
++  {
++  case INTERP_R_MASK:
++  // f_rr.setSample(x, y, R, 0);
++  // f_rr.setSample(x, y, G, (int)(g));
++  // f_rr.setSample(x, y, B, (int)(b));
++  clearNeighbors(x,y);
++  break;
++  case R2_M:
++  // f_rr.setSample(x, y, R, 0);
++  f_rr.setSample(x, y, G, gsum);
++  // f_rr.setSample(x, y, B, (int)(b));
++  clearNeighbors(x,y);
++  break;
++  case R3_M:
++  // f_rr.setSample(x, y, R, 0);
++  // f_rr.setSample(x, y, G, (int)(g));
++  f_rr.setSample(x, y, B, bsum);
++  clearNeighbors(x,y);
++  break;
++  case R4_M:
++  // f_rr.setSample(x, y, R, 0);
++  f_rr.setSample(x, y, G, gsum);
++  f_rr.setSample(x, y, B, bsum);
++  // clearNeighbors(x,y);
++  break;
++  }
++*/
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./cfa/ColorFilterArray.java	2012-02-28 04:18:15.000000000 -0800
++++ ./cfa/ColorFilterArray.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,6 +1,5 @@
+ package com.crinqle.dlroom.cfa;
+ 
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ 
+ 
+@@ -8,7 +7,7 @@
+  * This class provides concrete BandIterator objects which are
+  * created for a given Color Filter Array specification.
+  */
+-public abstract class ColorFilterArray
++public abstract class ColorFilterArray implements Const
+ {
+ 	protected final int f_fs;
+ 	protected int f_bc;
+@@ -41,10 +40,9 @@
+ 
+ 
+ 	public int getBandCount() { return f_bc; }
+-	public abstract ColorFilterArray arrayAtOffset ( int x, int y );
+ 
+ 
+-	public abstract Interpolation interpolation ( RawRaster rr );
+-	public abstract BandIterator[] bandIterators ( ImageData id );
+-	public abstract AreaBandIterator[] areaBandIterators ( ImageData id, int radius );
++	abstract public Interpolation interpolation ( RawRaster rr );
++	abstract public BandIterator[] bandIterators ( ImageData id );
++	abstract public AreaBandIterator[] areaBandIterators ( ImageData id, int radius );
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./codec/CanonEOSD30.java	2012-02-28 04:18:15.000000000 -0800
++++ ./codec/CanonEOSD30.java	2012-02-28 04:18:15.000000000 -0800
+@@ -3,7 +3,6 @@
+ import java.awt.color.*;
+ import java.io.*;
+ import java.util.*;
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ import com.crinqle.dlroom.util.*;
+ 
+@@ -207,7 +206,7 @@
+ 
+ 	public CaptureData decode()
+ 	{
+-		f_cd = new CaptureData(f_info.width, f_info.height, FILTER_RGGB, 12);
++		f_cd = new CaptureData(f_info.width, f_info.height, CaptureData.FILTER_RGGB, 12);
+ 		f_cd.setImageInfo(f_info);
+ 
+ 		final int table = (f_info.table > 2) ? 2 : f_info.table;
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./ColorPanel.java	2012-02-28 04:18:15.000000000 -0800
++++ ./ColorPanel.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,28 +1,13 @@
+ package com.crinqle.dlroom;
+ 
+-import java.awt.Color;
+-import java.awt.Dimension;
+-import java.awt.Graphics;
+-import java.awt.Graphics2D;
+-import java.awt.Point;
+-import java.awt.color.ICC_Profile;
+-import java.awt.event.MouseListener;
+-import java.awt.event.MouseMotionListener;
+-import java.awt.image.BufferedImage;
+-import java.awt.image.Raster;
+-import java.awt.image.WritableRaster;
+-import java.util.Collection;
+-import java.util.Iterator;
+-import java.util.LinkedList;
+-
+-import javax.swing.JFrame;
+-import javax.swing.JPanel;
+-import javax.swing.JScrollPane;
++import java.awt.*;
++import java.awt.color.*;
++import java.awt.image.*;
++import javax.swing.*;
++import com.crinqle.dlroom.event.*;
+ 
+-import com.crinqle.dlroom.event.RawRasterSelectionListener;
+ 
+-
+-public class ColorPanel extends JPanel implements MouseListener, MouseMotionListener
++public class ColorPanel extends JPanel implements Const
+ {
+ 	private static final int TYPE_NONE = 0;
+ 	private static final int TYPE_DISPLAY = 1;
+@@ -35,33 +20,6 @@
+ 	private BufferedImage f_bi;
+ 	private WritableRaster f_wr;
+ 
+-	private Collection<RawRasterSelectionListener> f_listeners = new LinkedList<RawRasterSelectionListener>();
+-
+-	private int f_sx1;
+-	private int f_sy1;
+-	private int f_sx2;
+-	private int f_sy2;
+-	private RawRaster f_srr = null;
+-
+-	private boolean f_isSelecting = false;
+-	private boolean f_isSelected = false;
+-
+-
+-	public ColorPanel() { addMouseListener(this); addMouseMotionListener(this); }
+-
+-
+-	public void addRawRasterSelectionListener ( RawRasterSelectionListener l ) { f_listeners.add(l); }
+-	private void fireRawRasterSelectionEvent()
+-	{
+-		if ( f_srr == null )
+-			return;
+-
+-		Iterator iter = f_listeners.iterator();
+-
+-		while ( iter.hasNext() )
+-			((RawRasterSelectionListener)iter.next()).subrasterSelected(this, f_srr);
+-	}
+-
+ 
+ 	public void setAsDisplay ( ICC_Profile displayProfile )
+ 	{
+@@ -78,7 +36,10 @@
+ 	}
+ 
+ 
+-	public RawRaster getRawRaster() { return f_rr; }
++	public RawRaster getRawRaster()
++	{
++		return f_rr;
++	}
+ 
+ 
+ 	public void setRawRaster ( RawRaster rr )
+@@ -96,7 +57,7 @@
+ 		{
+ 			final int shift = Math.abs(bits - 8);
+ 
+-			// System.err.println("  Depth scaling...");
++			System.err.println("  Depth scaling...");
+ 
+ 			for ( int y = 0; y < h; ++y )
+ 				for ( int x = 0; x < w; ++x )
+@@ -130,93 +91,47 @@
+ 	}
+ 
+ 
+-	public void mouseClicked ( MouseEvent evt )
+-	{
+-		final int x = evt.getX();
+-		final int y = evt.getY();
+-
+-	}
+-	public void mouseEntered ( MouseEvent evt ) {}
+-	public void mouseExited ( MouseEvent evt ) {}
+-	public void mousePressed ( MouseEvent evt )
++	/*
++	public void applyLUT ( LUT lut )
+ 	{
+-		f_sx1 = evt.getX();
+-		f_sy1 = evt.getY();
++		System.err.println("  Applying LUT changes...");
+ 
+-		// System.out.println("  Getting new subraster @ (" + f_sx1 + ", " + f_sy1 + ")...");
+-	}
+-	public void mouseReleased ( MouseEvent evt )
+-	{
+-		f_sx2 = evt.getX();
+-		f_sy2 = evt.getY();
+-
+-		repaint();
+-
+-		if ( f_isSelecting )
+-		{
+-			System.out.println("  ==> Ending new subraster @ (" + f_sx2 + ", " + f_sy2 + ")...");
+-			
+-			sortSelection();
+-
+-			final int w = f_sx2 - f_sx1;
+-			final int h = f_sy2 - f_sy1;
+-
+-			f_srr = f_rr.subraster(f_sx1, f_sy1, w, h);
+-
+-			// DEBUG!! ImageData.println(rr);
+-
+-			f_isSelecting = false;
+-			f_isSelected = true;
+-
+-			fireRawRasterSelectionEvent();
+-		}
+-	}
+-	public void mouseDragged ( MouseEvent evt )
+-	{
+-		f_isSelecting = true;
+-		f_isSelected = false;
+-
+-		f_sx2 = evt.getX();
+-		f_sy2 = evt.getY();
+-
+-		// System.out.println("  --> Moving new subraster to (" + f_sx2 + ", " + f_sy2 + ")...");
+-
+-		repaint();
+-	}
+-	public void mouseMoved ( MouseEvent evt ) {}
++		RawRaster copy = f_rr.createBlankCopy();
++		int[] array = lut.getArray();
+ 
++		final int w = getWidth();
++		final int h = getHeight();
+ 
+-	private void sortSelection()
+-	{
+-		int temp;
++		for ( int y = 0; y < h; ++y )
++			for ( int x = 0; x < w; ++x )
++			{
++// 				final int r = f_rr.getSample(x, y, R);
++// 				final int g = f_rr.getSample(x, y, G);
++// 				final int b = f_rr.getSample(x, y, B);
++
++// 				final int r2 = array[r];
++// 				final int g2 = array[g];
++// 				final int b2 = array[b];
++
++// 				copy.setSample(x, y, R, r2);
++// 				copy.setSample(x, y, G, g2);
++// 				copy.setSample(x, y, B, b2);
++
++				copy.setSample(x, y, R, array[f_rr.getSample(x, y, R)]);
++				copy.setSample(x, y, G, array[f_rr.getSample(x, y, G)]);
++				copy.setSample(x, y, B, array[f_rr.getSample(x, y, B)]);
++			}
+ 
+-		if ( f_sx1 > f_sx2 ) { temp = f_sx1; f_sx1 = f_sx2; f_sx2 = temp; }
+-		if ( f_sy1 > f_sy2 ) { temp = f_sy1; f_sy1 = f_sy2; f_sy2 = temp; }
++		setRawRaster(copy);
+ 	}
++	*/
+ 
+ 
+ 	public void paintComponent ( Graphics g )
+ 	{
+ 		Graphics2D g2d = (Graphics2D)g;
+-		g2d.drawRenderedImage(f_bi, null);
+ 
+-		if ( f_isSelecting  ||  f_isSelected )
+-		{
+-			if ( f_sx1 == f_sx2  &&  f_sy1 == f_sy2 )
+-				return;
+-
+-			int temp;
+-			int sx1 = f_sx1;
+-			int sy1 = f_sy1;
+-			int sx2 = f_sx2;
+-			int sy2 = f_sy2;
+-
+-			if ( sx1 > sx2 ) { temp = sx1; sx1 = sx2; sx2 = temp; }
+-			if ( sy1 > sy2 ) { temp = sy1; sy1 = sy2; sy2 = temp; }
+-
+-			g2d.setXORMode(Color.white);
+-			g2d.drawRect(sx1, sy1, sx2 - sx1, sy2 - sy1);
+-		}
++		g2d.drawRenderedImage(f_bi, null);
+ 	}
+ 
+ 
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./ColorPPMFile.java	2012-02-28 04:18:15.000000000 -0800
++++ ./ColorPPMFile.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,24 +1,14 @@
+ package com.crinqle.dlroom;
+ 
+-import java.awt.color.ICC_Profile;
+-import java.awt.image.DataBuffer;
+-import java.awt.image.WritableRaster;
+-import java.io.ByteArrayInputStream;
+-import java.io.ByteArrayOutputStream;
+-import java.io.DataInputStream;
+-import java.io.File;
+-import java.io.FileInputStream;
+-import java.io.IOException;
+-import java.io.InputStream;
+-import java.io.OutputStream;
+-import java.io.PushbackInputStream;
+-import java.util.Arrays;
+-import java.util.Calendar;
+-
++import java.awt.color.*;
++import java.awt.image.*;
++import java.io.*;
++import java.util.*;
++import com.crinqle.dlroom.codec.*;
+ import com.crinqle.dlroom.util.*;
+ 
+ 
+-public class ColorPPMFile
++public class ColorPPMFile implements Const
+ {
+ 	public static final String MAGIC = "P6";
+ 	public static final String ICC_HEADER = "ICCWorkingSpaceProfile:";
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./Const.java	2012-02-28 04:18:15.000000000 -0800
++++ ./Const.java	2012-02-28 04:18:15.000000000 -0800
+@@ -19,9 +19,6 @@
+ 	int B = 2;
+ 	int H = 3;
+ 
+-	String[] CHANNEL_NAME = { "Red", "Green", "Blue", "Hreen" };
+-	String[] CHANNEL_NICKNAME = { "R", "G", "B", "H" };
+-
+ 	int FILTER_BGGR = 0;
+ 	int FILTER_GRBG = 1;
+ 	int FILTER_GBRG = 2;
+@@ -32,12 +29,12 @@
+ 	int FILTER_CYMGYCGM = 102;
+ 	int FILTER_YCMGCYGM = 103;
+ 
+-	int R_MASK = 1;
+-	int G_MASK = 1 << 1;
+-	int H_MASK = G_MASK << 8;
+-	int B_MASK = 1 << 2;
++	int INTERP_R_MASK = 1;
++	int INTERP_G_MASK = 1 << 1;
++	int INTERP_H_MASK = INTERP_G_MASK << 8;
++	int INTERP_B_MASK = 1 << 2;
+ 
+-	int ALL_MASK = -1;
++	int INTERP_ALL_MASK = -1;
+ 
+ 	int SLIDER_SIZE = 256;
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./CurvePanel.java	2012-02-28 04:18:15.000000000 -0800
++++ ./CurvePanel.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,22 +1,21 @@
+ package com.crinqle.dlroom;
+ 
+ import java.awt.*;
+-import java.util.*;
+ import javax.swing.*;
+ import javax.swing.border.*;
+ import com.crinqle.dlroom.event.*;
+ import com.crinqle.dlroom.math.*;
+ 
+ 
+-public class CurvePanel extends JPanel implements LUTChangeListener, BitDepthChangeListener
++public class CurvePanel extends JPanel implements LUTChangeListener
+ {
+ 	private SplinePanel f_sp;
+-	private Collection<LUTChangeListener> f_listeners = new LinkedList<LUTChangeListener>();
++	private java.util.List f_listeners = new java.util.LinkedList();
+ 
+ 
+-	public CurvePanel ( int channel, int bits )
++	public CurvePanel ( int bits )
+ 	{
+-		f_sp = new SplinePanel(channel, bits);
++		f_sp = new SplinePanel(bits);
+ 		f_sp.addLUTChangeListener(this);
+ 
+ 		JPanel spHolder = new JPanel();
+@@ -26,17 +25,38 @@
+ 
+ 		setBorder(border);
+ 
++		/*
++		Insets insets = border.getBorderInsets(this);
++		Dimension d = getPreferredSize();
++		d.width += (insets.left + insets.right);
++		d.height += (insets.top + insets.bottom);
++
++		setPreferredSize(d);
++		setMaximumSize(d);
++		setMinimumSize(d);
++		*/
++	
+ 		setLayout(new BorderLayout());
+ 
+ 		add(f_sp, BorderLayout.CENTER);
+ 	}
+ 
+ 
+-
+ 	public void applyLUT ( Object source, LUT lut ) { fireLUTChangeEvent(lut); }
+-	public void updateBits ( Object source, int bits ) { f_sp.updateBits(source, bits); }
+ 
+ 
+ 	public void addLUTChangeListener ( LUTChangeListener l ) { f_listeners.add(l); }
+-	protected void fireLUTChangeEvent ( LUT lut ) { for ( LUTChangeListener l : f_listeners ) l.applyLUT(this, lut); }
++
++
++	protected void fireLUTChangeEvent ( LUT lut )
++	{
++		java.util.Iterator iter = f_listeners.iterator();
++
++		while ( iter.hasNext() )
++		{
++			LUTChangeListener l = (LUTChangeListener)iter.next();
++
++			l.applyLUT(this, lut);
++		}
++	}
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./file.list	2012-02-28 03:54:36.000000000 -0800
++++ ./file.list	2012-02-28 03:54:37.000000000 -0800
+@@ -4,4 +4,3 @@
+ dlroom/test/InterpProf.java
+ 
+ dlroom/app/Main.java
+-dlroom/app/Main2.java
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./ImageData.java	2012-02-28 04:18:15.000000000 -0800
++++ ./ImageData.java	2012-02-28 04:18:15.000000000 -0800
+@@ -2,7 +2,6 @@
+ 
+ import java.awt.color.*;
+ import java.awt.image.*;
+-import static com.crinqle.dlroom.Const.*;
+ 
+ 
+ /**
+@@ -45,30 +44,6 @@
+ 	protected ICC_Profile f_profile = null;
+ 
+ 
+-	public static void println ( ImageData id )
+-	{
+-		final int w = id.f_w;
+-		final int h = id.f_h;
+-		final int each = id.f_each;
+-		final int banks = id.getNumBanks();
+-		final int[] a = id.f_a;
+-
+-		for ( int bank = 0; bank < banks; ++bank )
+-		{
+-			final int offset = bank * each;
+-
+-			System.out.print("\t-- Bank " + CHANNEL_NAME[bank] + "--\n  ");
+-			for ( int y = 0; y < h; ++y )
+-			{
+-				for ( int x = 0; x < w; ++x )
+-					System.out.print(a[offset + x + y * w] + "\t");
+-
+-				System.out.print("\n\n  ");
+-			}
+-		}
+-	}
+-
+-
+ 	public ImageData ( int width, int height, int bits )
+ 	{
+ 		super(TYPE, width * height);
+@@ -136,75 +111,6 @@
+ 	public void setSample ( int x, int y, int val ) { f_a[x + y * f_w] = val; }
+ 	public void setSample ( int x, int y, int band, int val ) { f_a[(band * f_each) + (x + y * f_w)] = val; }
+ 
+-
+-	public ImageData subset ( int x, int y )
+-	{
+-		final int w = f_w - x;
+-		final int h = f_h - y;
+-
+-		return subset(x, y, w, h);
+-	}
+-	public ImageData subset ( int x, int y, int width, int height )
+-	{
+-		final int banks = getNumBanks();
+-
+-		ImageData id = new ImageData(width, height, banks, f_bits);
+-
+-		int bo = -f_each;
+-		int tbo = -id.f_each;
+-
+-		for ( int bank = 0; bank < banks; ++bank )
+-		{
+-			bo += f_each;
+-			tbo += id.f_each;
+-
+-			int offset = bo + (y * f_w) + (x - f_w);
+-			int target = tbo - width;
+-
+-			for ( int row = 0; row < height; ++row )
+-			{
+-				offset += f_w;
+-				target += width;
+-
+-				System.arraycopy(f_a, offset, id.f_a, target, width);
+-			}
+-		}
+-
+-		return id;
+-	}
+-	/*
+-	public ImageData subset ( int x, int y )
+-	{
+-		final int w = f_w - x;
+-		final int h = f_h - y;
+-		final int banks = getNumBanks();
+-
+-		ImageData id = new ImageData(w, h, banks, f_bits);
+-
+-		int bo = -f_each;
+-		int tbo = -id.f_each;
+-
+-		for ( int bank = 0; bank < banks; ++bank )
+-		{
+-			bo += f_each;
+-			tbo += id.f_each;
+-
+-			int offset = bo + (y * f_w) + (x - f_w);
+-			int target = tbo - w;
+-
+-			for ( int row = 0; row < h; ++row )
+-			{
+-				offset += f_w;
+-				target += w;
+-
+-				System.arraycopy(f_a, offset, id.f_a, target, w);
+-			}
+-		}
+-
+-		return id;
+-	}
+-	*/
+-
+ 	public int[] getData() { return f_a; }
+ 	public void setData ( int[] array )
+ 	{
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./LUT.java	2012-02-28 04:18:15.000000000 -0800
++++ ./LUT.java	2012-02-28 04:18:15.000000000 -0800
+@@ -3,49 +3,14 @@
+ 
+ public class LUT
+ {
+-	private final int f_chan;
+ 	private final int f_max;
+ 	private final int f_l;
+ 	private float[] f_a;
+ 	private int[] f_ia;
+ 
+ 
+-	/**
+-	 * @param channel Channel to adjust
+-	 * @param array Values in LUT
+-	 * @param targetMax Clamping value & scaling factor (to bring LUT values into target range)
+-	 */
+-	public LUT ( int channel, float[] array, int targetMax )
++	public LUT ( float[] array, float max, int targetMax )
+ 	{
+-		f_chan = channel;
+-		f_max = targetMax;
+-		f_l = array.length;
+-		f_a = array;
+-
+-		f_ia = new int[f_l];
+-		int val;
+-
+-		for ( int i = 0; i < f_l; ++i )
+-		{
+-			val = Math.round(f_a[i]); // (f_max * f_a[i]) / max);
+-
+-			if ( val > f_max )
+-				f_ia[i] = f_max;
+-			else if ( val < 0 )
+-				f_ia[i] = 0;
+-			else
+-				f_ia[i] = val;
+-		}
+-	}
+-	/**
+-	 * @param channel Channel to adjust
+-	 * @param array Values in LUT
+-	 * @param max Normalizing factor (to bring LUT values between 0 and 1)
+-	 * @param targetMax Clamping value & scaling factor (to bring LUT values into target range)
+-	 */
+-	public LUT ( int channel, float[] array, float max, int targetMax )
+-	{
+-		f_chan = channel;
+ 		f_max = targetMax;
+ 		f_l = array.length;
+ 		f_a = array;
+@@ -67,8 +32,7 @@
+ 	}
+ 
+ 
+-	public int channel() { return f_chan; }
+-	public int[] array() { return f_ia; }
++	public int[] getArray() { return f_ia; }
+ 
+ 
+ 	public String toString()
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./Makefile	2012-02-28 03:54:36.000000000 -0800
++++ ./Makefile	2012-02-28 03:54:37.000000000 -0800
+@@ -3,15 +3,12 @@
+ 
+ LDFLAGS:=			-shared -llcms
+ 
+-JAVAC:=				/opt/java/bin/javac
+-#JFLAGS:=			-source 1.5 -Xlint:unchecked
+-
+ CFLAGS:=			-g
+ 
+ CPPFLAGS:=			-I/home/qrux/lcms/include
+ CPPFLAGS+=			-I/usr/lib/java/include
+ CPPFLAGS+=			-I/usr/lib/java/include/linux
+-CPPFLAGS+=			-I/home/qrux/dlroom/include
++CPPFLAGS+=			-I/home/qrux/dlroom/src/include
+ 
+ BOOTCLASSPATH:=			/usr/lib/SunJava2-1.4.2/jre/lib/rt.jar:/usr/lib/SunJava2-1.4.2/jre/lib/sunrsasign.jar:/usr/lib/SunJava2-1.4.2/jre/lib/jsse.jar:/usr/lib/SunJava2-1.4.2/jre/lib/jce.jar:/usr/lib/SunJava2-1.4.2/jre/lib/charsets.jar
+ 
+@@ -31,8 +28,7 @@
+ 
+ .PHONY:			java
+ java:
+-	$(JAVAC) $(JFLAGS) -g @$(TARGET_FILE)
+-#	jikes -source 1.4 -bootclasspath $(BOOTCLASSPATH) -g @$(TARGET_FILE)
++	jikes -source 1.4 -bootclasspath $(BOOTCLASSPATH) -g @$(TARGET_FILE)
+ 
+ 
+ .PHONY:			jni
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./math/ControlCurve.java	2012-02-28 04:18:15.000000000 -0800
++++ ./math/ControlCurve.java	2012-02-28 04:18:15.000000000 -0800
+@@ -2,32 +2,29 @@
+ 
+ import java.awt.*;
+ import com.crinqle.dlroom.*;
+-import com.crinqle.dlroom.event.*;
+ 
+ 
+ /**
+  * This class represents a curve defined by a sequence of control
+  * points
+  */
+-public abstract class ControlCurve implements BitDepthChangeListener
++public abstract class ControlCurve
+ {
+ 	static final int EPSILON = 225;  /* square of distance for picking */
+ 
+-	private final int f_chan;
++	final private int f_bits;
+ 
+-	protected final int f_dim;
++	final protected int f_dim;
++	final protected int f_max;
++	final protected int f_scale;
+ 
+-	private int f_bits;
+-	protected int f_max;
+-	protected int f_scale;
+ 	protected float[] f_range;
+ 	protected Polygon pts;
+ 	protected int selection = -1;
+   
+ 
+-	public ControlCurve ( int channel, int dim, int bits )
++	public ControlCurve ( int dim, int bits )
+ 	{
+-		f_chan = channel;
+ 		f_dim = dim;
+ 		f_bits = bits;
+ 		f_max = 1 << f_bits;
+@@ -42,10 +39,7 @@
+ 	}
+ 
+ 
+-	public LUT getLUT() { LUT lut = new LUT(f_chan, f_range, (float)f_dim, f_max-1); return lut; }
+-
+-
+-	public void updateBits ( Object source, int bits ) { f_bits = bits; f_max = 1 << f_bits; f_scale = f_max / f_dim; f_range = new float[f_max]; }
++	public LUT getLUT() { LUT lut = new LUT(f_range, (float)f_dim, f_max-1); return lut; }
+ 
+ 
+ 	/**
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./math/NatCubic.java	2012-02-28 04:18:15.000000000 -0800
++++ ./math/NatCubic.java	2012-02-28 04:18:15.000000000 -0800
+@@ -9,7 +9,7 @@
+ 	final int STEPS = 100;
+ 
+ 
+-	public NatCubic ( int channel, int dim, int bits ) { super(channel, dim, bits); }
++	public NatCubic ( int dim, int bits ) { super(dim, bits); }
+ 
+ 
+ 	/**
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./math/SplinePanel.java	2012-02-28 04:18:15.000000000 -0800
++++ ./math/SplinePanel.java	2012-02-28 04:18:15.000000000 -0800
+@@ -4,24 +4,22 @@
+ import java.awt.event.*;
+ import java.util.*;
+ import javax.swing.*;
+-
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ import com.crinqle.dlroom.event.*;
+ 
+ 
+-public class SplinePanel extends JPanel implements MouseListener, MouseMotionListener, BitDepthChangeListener
++public class SplinePanel extends JPanel implements Const, MouseListener, MouseMotionListener
+ {
+ 	private ControlCurve f_c;
+ 	private Polygon f_p = new Polygon();
+ 	private int f_index = -1;
+ 	private LUT f_lut;
+-	private Collection<LUTChangeListener> f_listeners = new LinkedList<LUTChangeListener>();
++	private java.util.List f_listeners = new LinkedList();
+ 
+ 
+-	public SplinePanel ( int channel, int bits )
++	public SplinePanel ( int bits )
+ 	{
+-		f_c = new NatCubic(channel, SLIDER_SIZE, bits);
++		f_c = new NatCubic(SLIDER_SIZE, bits);
+ 
+ 		addMouseListener(this);
+ 		addMouseMotionListener(this);
+@@ -37,7 +35,19 @@
+ 
+ 
+ 	public void addLUTChangeListener ( LUTChangeListener l ) { f_listeners.add(l); }
+-	protected void fireLUTChangeEvent() { for ( LUTChangeListener l : f_listeners ) l.applyLUT(this, f_lut); } // Iterator iter = f_listeners.iterator(); while ( iter.hasNext() ) ((LUTChangeListener)iter.next()).applyLUT(this, f_lut); }
++
++
++	protected void fireLUTChangeEvent()
++	{
++		Iterator iter = f_listeners.iterator();
++
++		while ( iter.hasNext() )
++		{
++			LUTChangeListener l = (LUTChangeListener)iter.next();
++
++			l.applyLUT(this, f_lut);
++		}
++	}
+ 
+ 
+ 	public LUT getLUT() { return f_lut; }
+@@ -54,9 +64,6 @@
+ 	}
+ 
+ 
+-	public void updateBits ( Object source, int bits ) { f_c.updateBits(source, bits); }
+-
+-
+ 	public void mouseClicked ( MouseEvent evt ) {}
+ 	public void mouseEntered ( MouseEvent evt ) {}
+ 	public void mouseExited ( MouseEvent evt ) {}
+@@ -131,7 +138,7 @@
+ 		if ( argc > 0 )
+ 			bits = Integer.parseInt(args[0]);
+ 
+-		SplinePanel panel = new SplinePanel(ALL_MASK, bits);
++		SplinePanel panel = new SplinePanel(bits);
+ 
+ 		JFrame frame = new JFrame("Spline Test");
+ 		frame.setContentPane(panel);
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./RasterStack.java	2012-02-28 04:18:15.000000000 -0800
++++ ./RasterStack.java	2012-02-28 04:18:15.000000000 -0800
+@@ -5,26 +5,18 @@
+ 
+ public class RasterStack
+ {
+-	private Stack<RawRaster> f_s = new Stack<RawRaster>();
+-
+-
+-	public boolean empty() { return f_s.empty(); }
+-	public void removeAllElements() { f_s.removeAllElements(); }
++	private Stack f_s = new Stack();
+ 
+ 
+ 	public RawRaster peek()
+ 	{
+-		try
+-		{
+-			return (RawRaster)f_s.peek();
+-		}
+-		catch ( EmptyStackException e ) { System.err.println("Peeking...Nothing on top; returning null."); return null; }
++		return (RawRaster)f_s.peek();
+ 	}
+ 
+ 
+ 	public RawRaster pop()
+ 	{
+-		return f_s.pop();
++		return (RawRaster)f_s.pop();
+ 	}
+ 
+ 
+@@ -36,12 +28,12 @@
+ 
+ 	public RawRaster first()
+ 	{
+-		return f_s.firstElement();
++		return (RawRaster)f_s.firstElement();
+ 	}
+ 
+ 
+ 	public RawRaster get ( int n )
+ 	{
+-		return f_s.get(n);
++		return (RawRaster)f_s.get(n);
+ 	}
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./RawRaster.java	2012-02-28 04:18:15.000000000 -0800
++++ ./RawRaster.java	2012-02-28 04:19:39.000000000 -0800
+@@ -3,7 +3,7 @@
+ import com.crinqle.dlroom.cfa.ColorFilterArray;
+ import com.crinqle.dlroom.cfa.Interpolation;
+ 
+-public class RawRaster extends ImageData implements Interpolation {
++public class RawRaster extends ImageData implements Const, Interpolation {
+ 	private CaptureData f_src;
+ 	private boolean f_ii = false;
+ 
+@@ -59,52 +59,34 @@
+ 		}
+ 	}
+ 
+-	public void applyLUT(LUT lut) // , RawRaster rr )
+-	{
+-		final int[] array = lut.array();
+-
+-		for (int i = 0; i < f_total; ++i)
+-			f_a[i] = array[f_a[i]];
+-	}
+-
+ 	public void applyLUT(LUT lut, RawRaster rr) {
+-		final int channel = lut.channel();
+-		final int[] array = lut.array();
+-
+-		applyLUT(channel, array, rr);
++		final int[] array = lut.getArray();
+ 
+-		/*
+-		 * if ( (channel & R_MASK) == R_MASK ) applyLUT(R, array, rr); if (
+-		 * (channel & G_MASK) == G_MASK ) applyLUT(G, array, rr); if ( (channel
+-		 * & B_MASK) == B_MASK ) applyLUT(B, array, rr);
+-		 */
++		for (int i = 0; i < f_total; ++i)
++			rr.f_a[i] = array[f_a[i]];
+ 	}
+ 
+-	private void applyLUT(int channel, int[] array, RawRaster rr) {
+-		final int offset = channel * f_each;
++	public void applyLUT(LUT lut, int band, RawRaster rr) {
++		final int[] array = lut.getArray();
++		final int offset = band * f_each;
+ 		final int end = offset + f_each;
+ 
+-		// for ( int i = 0; i < offset; ++i )
+-		// rr.f_a[i] = f_a[i];
++		for (int i = 0; i < offset; ++i)
++			rr.f_a[i] = f_a[i];
+ 		for (int i = offset; i < end; ++i)
+ 			rr.f_a[i] = array[f_a[i]];
+-		// for ( int i = end; i < f_total; ++i )
+-		// rr.f_a[i] = f_a[i];
++		for (int i = end; i < f_total; ++i)
++			rr.f_a[i] = f_a[i];
+ 	}
+ 
+ 	public RawRaster createCopy() {
+ 		RawRaster rr = createBlankCopy();
+-		rr.f_src = f_src;
+ 		rr.setData(f_a);
+-		rr.setProfile(getProfile());
+ 		return rr;
+ 	}
+ 
+ 	public RawRaster createBlankCopy() {
+-		RawRaster rr = new RawRaster(getWidth(), getHeight(), getBandCount(),
+-				getBits());
+-		rr.setProfile(getProfile());
+-		return rr;
++		return new RawRaster(getWidth(), getHeight(), getBandCount(), getBits());
+ 	}
+ 
+ 	public ImageInfo getImageInfo() {
+@@ -118,18 +100,6 @@
+ 			f_src.setImageInfo(info);
+ 	}
+ 
+-	/**
+-	 * This method returns a rectangular subset of the current raster. It also
+-	 * uses the
+-	 */
+-	public RawRaster subraster(int x, int y, int width, int height) {
+-		return new RawRaster(f_src.subraster(x, y, width, height));
+-	}
+-
+-	public RawRaster subraster(int x, int y) {
+-		return new RawRaster(f_src.subraster(x, y));
+-	}
+-
+ 	public void interpolate(int mask) {
+ 		if (f_src != null) {
+ 			Interpolation i = f_src.getCFA().interpolation(this);
+@@ -157,7 +127,7 @@
+ 		}
+ 
+ 		try {
+-			com.crinqle.dlroom.codec.RawCodec codec = com.crinqle.dlroom.codec.RawCodec
++			dlroom.codec.RawCodec codec = dlroom.codec.RawCodec
+ 					.getInstance(new java.io.File(args[0]));
+ 
+ 			CaptureData cd = codec.decode();
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./test/BayerTest.java	2012-02-28 04:18:15.000000000 -0800
++++ ./test/BayerTest.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,124 +1,137 @@
+ package com.crinqle.dlroom.test;
+ 
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ 
+-public class BayerTest {
++
++public class BayerTest implements Const
++{
+ 	public static final int DIM = 6 * 4;
+ 	public static final int W = 3 * DIM;
+ 	public static final int H = 3 * DIM;
+ 
+-	public static CaptureData makeSmallWhiteTestGrid() {
++
++	public static CaptureData makeSmallWhiteTestGrid()
++	{
+ 		CaptureData cd = new CaptureData(DIM, DIM, FILTER_RGGB, 8);
+ 
+-		for (int y = 0; y < DIM; ++y)
+-			for (int x = 0; x < DIM; ++x)
++		for ( int y = 0; y < DIM; ++y )
++			for ( int x = 0; x < DIM; ++x )
+ 				cd.setSample(x, y, 255);
+ 
+ 		return cd;
+ 	}
+ 
+-	public static CaptureData makeWhiteTestGrid() {
++
++	public static CaptureData makeWhiteTestGrid()
++	{
+ 		CaptureData cd = new CaptureData(W, H, FILTER_RGGB, 8);
+ 
+-		for (int y = 0; y < H; ++y)
+-			for (int x = 0; x < W; ++x)
++		for ( int y = 0; y < H; ++y )
++			for ( int x = 0; x < W; ++x )
+ 				cd.setSample(x, y, 255);
+ 
+ 		return cd;
+ 	}
+ 
+-	public static CaptureData makeColorTestGrid() {
++
++	public static CaptureData makeColorTestGrid()
++	{
+ 		CaptureData cd = new CaptureData(W, H, FILTER_RGGB, 8);
+ 
+-		setBlockBand(cd, 0, 0, B, 255);
+-		setBlockBand(cd, DIM, 0, G, 255);
+-		setBlockBand(cd, DIM, 0, H, 255);
++		setBlockBand(cd,        0, 0, B, 255);
++		setBlockBand(cd,      DIM, 0, G, 255);
++		setBlockBand(cd,      DIM, 0, H, 255);
+ 		setBlockBand(cd, DIM << 1, 0, R, 255);
+ 
+-		setBlockBand(cd, 0, DIM, R, 255);
+-		setBlockBand(cd, 0, DIM, G, 255);
+-		setBlockBand(cd, 0, DIM, H, 255);
+-		setBlockBand(cd, DIM, DIM, R, 255);
+-		setBlockBand(cd, DIM, DIM, B, 255);
++		setBlockBand(cd,        0, DIM, R, 255);
++		setBlockBand(cd,        0, DIM, G, 255);
++		setBlockBand(cd,        0, DIM, H, 255);
++		setBlockBand(cd,      DIM, DIM, R, 255);
++		setBlockBand(cd,      DIM, DIM, B, 255);
+ 		setBlockBand(cd, DIM << 1, DIM, G, 255);
+ 		setBlockBand(cd, DIM << 1, DIM, H, 255);
+ 		setBlockBand(cd, DIM << 1, DIM, B, 255);
+ 
+-		makeGrayBlock(cd, 0, DIM << 1, 255);
+-		makeGrayBlock(cd, DIM, DIM << 1, 255 - 51);
+-		makeGrayBlock(cd, DIM << 1, DIM << 1, 255 - 102);
++		makeGrayBlock(cd,         0,  DIM << 1, 255);
++		makeGrayBlock(cd,       DIM,  DIM << 1, 255 - 51);
++		makeGrayBlock(cd,  DIM << 1,  DIM << 1, 255 - 102);
+ 
+ 		return cd;
+ 	}
+ 
+-	private static void setBlockBand(CaptureData cd, int dx, int dy, int band,
+-			int value) {
++
++	private static void setBlockBand ( CaptureData cd, int dx, int dy, int band, int value )
++	{
+ 		int cfa_dx = 0;
+ 		int cfa_dy = 0;
+ 
+-		switch (band) {
+-		case R:
+-			break;
+-
+-		case G:
+-			cfa_dx = 1;
+-			cfa_dy = 0;
+-			break;
+-
+-		case H:
+-			cfa_dx = 0;
+-			cfa_dy = 1;
+-			break;
+-
+-		case B:
+-			cfa_dx = 1;
+-			cfa_dy = 1;
+-			break;
++		switch ( band )
++		{
++		    case R:
++			    break;
++
++		    case G:
++			    cfa_dx = 1;
++			    cfa_dy = 0;
++			    break;
++
++		    case H:
++			    cfa_dx = 0;
++			    cfa_dy = 1;
++			    break;
++
++		    case B:
++			    cfa_dx = 1;
++			    cfa_dy = 1;
++			    break;
+ 
+-		default:
+-			throw new RuntimeException("Huh?  What band, exactly...?");
++		    default:
++			    throw new RuntimeException("Huh?  What band, exactly...?");
+ 		}
+ 
+ 		final int xmax = dx + DIM;
+ 		final int ymax = dy + DIM;
+ 
+-		for (int y = dy + cfa_dy; y < ymax; y += 2)
+-			for (int x = dx + cfa_dx; x < xmax; x += 2)
++		for ( int y = dy + cfa_dy; y < ymax; y += 2 )
++			for ( int x = dx + cfa_dx; x < xmax; x += 2 )
+ 				cd.setSample(x, y, value);
+ 	}
+ 
+-	public static CaptureData makeDiagonalTestGrid() {
++
++	public static CaptureData makeDiagonalTestGrid()
++	{
+ 		CaptureData cd = new CaptureData(W, H, FILTER_RGGB, 8);
+ 
+-		makeGrayBlock(cd, 0, 0, 255);
+-		makeGrayBlock(cd, DIM, 0, 224);
+-		makeGrayBlock(cd, 2 * DIM, 0, 191);
+-		makeGrayBlock(cd, 0, DIM, 159);
+-		makeGrayBlock(cd, 2 * DIM, DIM, 127);
+-		makeGrayBlock(cd, 0, 2 * DIM, 95);
+-		makeGrayBlock(cd, DIM, 2 * DIM, 63);
+-		makeGrayBlock(cd, 2 * DIM, 2 * DIM, 0);
++		makeGrayBlock(cd,  0,  0, 255);
++		makeGrayBlock(cd,  DIM,  0, 224);
++		makeGrayBlock(cd, 2*DIM,  0, 191);
++		makeGrayBlock(cd,  0,  DIM, 159);
++		makeGrayBlock(cd, 2*DIM,  DIM, 127);
++		makeGrayBlock(cd,  0, 2*DIM,  95);
++		makeGrayBlock(cd,  DIM, 2*DIM,  63);
++		makeGrayBlock(cd, 2*DIM, 2*DIM,   0);
+ 
+ 		final int xmax = DIM << 1;
+ 		final int ymax = DIM << 1;
+ 
+-		for (int y = DIM; y < ymax; ++y)
+-			for (int x = DIM; x < xmax; ++x)
++		for ( int y = DIM; y < ymax; ++y )
++			for ( int x = DIM; x < xmax; ++x )
+ 				cd.setSample(x, y, (y > x ? 255 : ((y == x) ? 127 : 0)));
+ 
+ 		return cd;
+ 	}
+ 
+-	private static void makeGrayBlock(CaptureData cd, int dx, int dy, int value) {
+-		if (value > 255 || value < 0)
++
++	private static void makeGrayBlock ( CaptureData cd, int dx, int dy, int value )
++	{
++		if ( value > 255  ||  value < 0 )
+ 			throw new RuntimeException("Can't have a value of " + value);
+ 
+ 		final int xmax = dx + DIM;
+ 		final int ymax = dy + DIM;
+ 
+-		for (int y = dy; y < ymax; ++y)
+-			for (int x = dx; x < xmax; ++x)
++		for ( int y = dy; y < ymax; ++y )
++			for ( int x = dx; x < xmax; ++x )
+ 				cd.setSample(x, y, value);
+ 	}
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./test/BayerUtils.java	2012-02-28 04:19:03.000000000 -0800
++++ ./test/BayerUtils.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,29 +1,20 @@
+ package com.crinqle.dlroom.test;
+ 
+-import static com.crinqle.dlroom.Const.B;
+-import static com.crinqle.dlroom.Const.G;
+-import static com.crinqle.dlroom.Const.H;
+-import static com.crinqle.dlroom.Const.R;
+-
+-import java.awt.Color;
+-import java.awt.Dimension;
+-import java.awt.GridLayout;
+-
+-import javax.swing.JFrame;
+-import javax.swing.JPanel;
+-
+-import com.crinqle.dlroom.AreaBandIterator;
+-import com.crinqle.dlroom.CaptureData;
+-import com.crinqle.dlroom.RawRaster;
++import java.awt.*;
++import javax.swing.*;
++import com.crinqle.dlroom.*;
+ 
+-class BayerUtils {
++
++class BayerUtils implements Const
++{
+ 	public final static double GAMMA = (1.0 / 1.8);
+ 
++
+ 	/**
+-	 * @param area
+-	 *            <b>Must</b> be a square!
++	 * @param area <b>Must</b> be a square!
+ 	 */
+-	public static JPanel showColorFilterArea(int[][] area, int bits, int band) {
++	public static JPanel showColorFilterArea ( int[][] area, int bits, int band )
++	{
+ 		final int dim = area.length;
+ 		final int shift = bits - 8;
+ 		final int r = dim >> 1;
+@@ -32,111 +23,118 @@
+ 		final int[][] ba = new int[2][2];
+ 
+ 		/*
+-		 * Even! The corner is the same color as the band.
++		 * Even!  The corner is the same color as the band.
+ 		 */
+-		if ((r % 2) == 1) {
+-			switch (band) {
+-			case G:
+-				ba[0][0] = G;
+-				ba[0][1] = R;
+-				ba[1][0] = B;
+-				ba[1][1] = H;
+-				break;
+-
+-			case H:
+-				ba[0][0] = H;
+-				ba[0][1] = B;
+-				ba[1][0] = R;
+-				ba[1][1] = G;
+-				break;
+-
+-			case B:
+-				ba[0][0] = B;
+-				ba[0][1] = H;
+-				ba[1][0] = G;
+-				ba[1][1] = R;
+-				break;
+-
+-			case R:
+-				ba[0][0] = R;
+-				ba[0][1] = G;
+-				ba[1][0] = H;
+-				ba[1][1] = B;
+-				break;
++		if ( (r % 2) == 1 )
++		{
++			switch ( band )
++			{
++			    case G:
++				    ba[0][0] = G;
++				    ba[0][1] = R;
++				    ba[1][0] = B;
++				    ba[1][1] = H;
++				    break;
++
++			    case H:
++				    ba[0][0] = H;
++				    ba[0][1] = B;
++				    ba[1][0] = R;
++				    ba[1][1] = G;
++				    break;
++
++			    case B:
++				    ba[0][0] = B;
++				    ba[0][1] = H;
++				    ba[1][0] = G;
++				    ba[1][1] = R;
++				    break;
++
++			    case R:
++				    ba[0][0] = R;
++				    ba[0][1] = G;
++				    ba[1][0] = H;
++				    ba[1][1] = B;
++				    break;
+ 			}
+ 		}
+ 		/*
+-		 * Odd! The corner is not the band.
++		 * Odd!  The corner is not the band.
+ 		 */
+-		else {
+-			switch (band) {
+-			case G:
+-				ba[0][0] = H;
+-				ba[0][1] = B;
+-				ba[1][0] = R;
+-				ba[1][1] = G;
+-				break;
+-
+-			case H:
+-				ba[0][0] = G;
+-				ba[0][1] = R;
+-				ba[1][0] = B;
+-				ba[1][1] = H;
+-				break;
+-
+-			case B:
+-				ba[0][0] = R;
+-				ba[0][1] = G;
+-				ba[1][0] = H;
+-				ba[1][1] = B;
+-				break;
+-
+-			case R:
+-				ba[0][0] = B;
+-				ba[0][1] = H;
+-				ba[1][0] = G;
+-				ba[1][1] = R;
+-				break;
++		else
++		{
++			switch ( band )
++			{
++			    case G:
++				    ba[0][0] = H;
++				    ba[0][1] = B;
++				    ba[1][0] = R;
++				    ba[1][1] = G;
++				    break;
++
++			    case H:
++				    ba[0][0] = G;
++				    ba[0][1] = R;
++				    ba[1][0] = B;
++				    ba[1][1] = H;
++				    break;
++
++			    case B:
++				    ba[0][0] = R;
++				    ba[0][1] = G;
++				    ba[1][0] = H;
++				    ba[1][1] = B;
++				    break;
++
++			    case R:
++				    ba[0][0] = B;
++				    ba[0][1] = H;
++				    ba[1][0] = G;
++				    ba[1][1] = R;
++				    break;
+ 			}
+ 		}
++			
+ 
+ 		JPanel panel = new JPanel();
+ 		panel.setLayout(new GridLayout(dim, dim));
+ 		Color c = null;
+-
+-		for (int y = 0; y < dim; ++y) {
++		
++		for ( int y = 0; y < dim; ++y )
++		{
+ 			// System.err.println("  ==> ");
+ 
+-			for (int x = 0; x < dim; ++x) {
++			for ( int x = 0; x < dim; ++x )
++			{
+ 				int value = area[y][x];
+ 
+ 				// System.err.print("\t" + value);
+ 
+-				double f = value / (double) max;
++				double f = value / (double)max;
+ 
+ 				// System.err.print("\t" + f + "(" + max + ")");
+ 
+ 				f = Math.pow(f, GAMMA);
+ 
+-				value = (int) (f * 255);
++				value = (int)(f * 255);
++
++				switch ( ba[y % 2][x % 2] )
++				{
++				    case G:
++				    case H:
++					    c = new Color(0, value, 0);
++					    break;
++
++				    case R:
++					    c = new Color(value, 0, 0);
++					    break;
++
++				    case B:
++					    c = new Color(0, 0, value);
++					    break;
+ 
+-				switch (ba[y % 2][x % 2]) {
+-				case G:
+-				case H:
+-					c = new Color(0, value, 0);
+-					break;
+-
+-				case R:
+-					c = new Color(value, 0, 0);
+-					break;
+-
+-				case B:
+-					c = new Color(0, 0, value);
+-					break;
+-
+-				default:
+-					throw new RuntimeException(
+-							"What the hell band is this?  Use the constants, asshole.");
++				    default:
++					    throw new RuntimeException("What the hell band is this?  Use the constants, asshole.");
+ 				}
+ 
+ 				panel.add(makePanel(c));
+@@ -148,11 +146,12 @@
+ 		return panel;
+ 	}
+ 
++
+ 	/**
+-	 * @param area
+-	 *            <b>Must</b> be a square!
++	 * @param area <b>Must</b> be a square!
+ 	 */
+-	public static JPanel showRawFilterArea(int[][] area, int bits, int band) {
++	public static JPanel showRawFilterArea ( int[][] area, int bits, int band )
++	{
+ 		final int dim = area.length;
+ 		final int shift = bits - 8;
+ 		final int r = dim >> 1;
+@@ -161,22 +160,24 @@
+ 		JPanel panel = new JPanel();
+ 		panel.setLayout(new GridLayout(dim, dim));
+ 		Color c = null;
+-
+-		for (int y = 0; y < dim; ++y) {
++		
++		for ( int y = 0; y < dim; ++y )
++		{
+ 			// System.err.print("  ==> ");
+ 
+-			for (int x = 0; x < dim; ++x) {
++			for ( int x = 0; x < dim; ++x )
++			{
+ 				int value = area[y][x];
+ 
+ 				// System.err.print("\t" + value);
+ 
+-				double f = value / (double) max;
++				double f = value / (double)max;
+ 
+ 				// System.err.print("\t" + f);
+ 
+ 				f = Math.pow(f, GAMMA);
+ 
+-				value = (int) (f * 255);
++				value = (int)(f * 255);
+ 
+ 				panel.add(makePanel(new Color(value, value, value)));
+ 			}
+@@ -187,7 +188,9 @@
+ 		return panel;
+ 	}
+ 
+-	private static JPanel makePanel(Color color) {
++
++	private static JPanel makePanel ( Color color )
++	{
+ 		JPanel p = new JPanel();
+ 		final int size = 4;
+ 
+@@ -200,16 +203,19 @@
+ 		return p;
+ 	}
+ 
+-	public static void main(String[] args) {
+-		if (args.length < 2) {
+-			System.err
+-					.println("Usage: java dlroom.BayerUtils <raw filename> <radius>");
++
++	public static void main ( String[] args )
++	{
++		if ( args.length < 2 )
++		{
++			System.err.println("Usage: java dlroom.BayerUtils <raw filename> <radius>");
+ 			System.exit(1);
+ 		}
+ 
+-		try {
+-			com.crinqle.dlroom.codec.RawCodec codec = com.crinqle.dlroom.codec.RawCodec
+-					.getInstance(new java.io.File(args[0]));
++		try
++		{
++			dlroom.codec.RawCodec codec =
++				dlroom.codec.RawCodec.getInstance(new java.io.File(args[0]));
+ 
+ 			final int radius = Integer.parseInt(args[1]);
+ 			final int diameter = radius * 2 + 1;
+@@ -221,18 +227,24 @@
+ 			AreaBandIterator abi = cd.areaBandIterator(CFA.R, radius);
+ 			int[][] array = null;
+ 
+-			if (abi.next())
++			if ( abi.next() )
+ 				array = abi.getArea();
+-
++				
+ 			/*
+-			 * for ( int band = 0; band < 3; ++band ) { for ( int y = 0; y <
+-			 * 2*radius+1; ++y ) { System.err.print("  band " + band + " --> ");
+-			 * 
+-			 * for ( int x = 0; x < 2*radius+1; ++x ) System.err.print("\t" +
+-			 * rr.sample(x, y, band));
+-			 * 
+-			 * System.err.println("\n"); } System.err.println("\n"); }
+-			 */
++			for ( int band = 0; band < 3; ++band )
++			{
++				for ( int y = 0; y < 2*radius+1; ++y )
++				{
++					System.err.print("  band " + band + " --> ");
++					
++					for ( int x = 0; x < 2*radius+1; ++x )
++						System.err.print("\t" + rr.sample(x, y, band));
++
++					System.err.println("\n");
++				}
++				System.err.println("\n");
++			}
++			*/
+ 
+ 			JPanel grid = showColorFilterArea(array, 12, CFA.R);
+ 
+@@ -242,9 +254,7 @@
+ 
+ 			frame.pack();
+ 			frame.setVisible(true);
+-		} catch (Exception e) {
+-			e.printStackTrace();
+-			System.exit(1);
+ 		}
++		catch ( Exception e ) { e.printStackTrace(); System.exit(1); }
+ 	}
+ }
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./test/InterpProf.java	2012-02-28 04:18:15.000000000 -0800
++++ ./test/InterpProf.java	2012-02-28 04:18:15.000000000 -0800
+@@ -1,12 +1,10 @@
+ package com.crinqle.dlroom.test;
+ 
+ import javax.swing.*;
+-
+-import static com.crinqle.dlroom.Const.*;
+ import com.crinqle.dlroom.*;
+ 
+ 
+-public class InterpProf
++public class InterpProf implements Const
+ {
+ 	public static RawRaster[][] createImages ( String[] args )
+ 	{
+@@ -57,10 +55,10 @@
+ 			}
+ 			*/
+ 
+-			rrR.interpolate(R_MASK);
+-			rrG.interpolate(G_MASK | H_MASK);
+-			rrH.interpolate(ALL_MASK);
+-			rrB.interpolate(B_MASK);
++			rrR.interpolate(INTERP_R_MASK);
++			rrG.interpolate(INTERP_G_MASK | INTERP_H_MASK);
++			rrH.interpolate(INTERP_ALL_MASK);
++			rrB.interpolate(INTERP_B_MASK);
+ 
+ 			/*
+ 			 * Applying gamma...
+--- /Users/troy/proj/java-raw/src/com/crinqle/dlroom/./util/Prefs.java	2012-02-28 04:18:15.000000000 -0800
++++ ./util/Prefs.java	2012-02-28 04:18:15.000000000 -0800
+@@ -35,8 +35,8 @@
+  */
+ public class Prefs
+ {
+-	private Hashtable<String,Hashtable<String,String>> f_hash = new Hashtable<String,Hashtable<String,String>>();
+-	private Hashtable<String,String> f_def = new Hashtable<String,String>();
++	private Hashtable f_def = new Hashtable();
++	private Hashtable f_hash = new Hashtable();
+ 
+ 
+ 	public static Prefs loadFromFile ( File file ) throws IOException
+@@ -112,21 +112,21 @@
+ 
+ 	public String get ( String section, String prop )
+ 	{
+-		Hashtable<String,String> h = f_hash.get(section);
++		Hashtable h = (Hashtable)f_hash.get(section);
+ 
+ 		if ( h == null )
+ 			return null;
+ 
+-		return h.get(prop);
++		return (String)h.get(prop);
+ 	}
+ 
+ 
+ 	public void put ( String section, String prop, String value )
+ 	{
+-		Hashtable<String,String> h = f_hash.get(section);
++		Hashtable h = (Hashtable)f_hash.get(section);
+ 
+ 		if ( h == null )
+-			f_hash.put(section, (h = new Hashtable<String,String>()));
++			f_hash.put(section, (h = new Hashtable()));
+ 
+ 		h.put(prop, value);
+ 	}
