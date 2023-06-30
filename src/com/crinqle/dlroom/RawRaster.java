@@ -114,8 +114,11 @@ public class RawRaster extends ImageData implements Interpolation
 
     public RawRaster createBlankCopy ()
     {
-        RawRaster rr = new RawRaster(getWidth(), getHeight(), getBandCount(),
-                                     getBits()
+        RawRaster rr = new RawRaster(
+              getWidth(),
+              getHeight(),
+              getBandCount(),
+              getBits()
         );
         rr.setProfile(getProfile());
         return rr;

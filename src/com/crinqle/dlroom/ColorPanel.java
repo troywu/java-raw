@@ -13,6 +13,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -22,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import com.crinqle.dlroom.event.RawRasterSelectionListener;
+import com.crinqle.dlroom.util.Prefs;
 
 import static com.crinqle.dlroom.Const.*;
 
@@ -263,6 +265,60 @@ public class ColorPanel
         }
     }
 
+
+    private void loadPreferences ()
+    {
+        String home      = System.getProperty("user.home");
+        String prefsPath = home + File.separator + prefsName;
+
+        System.err.println("Loading application prefs from: " + prefsPath);
+
+        try
+        {
+            prefs = Prefs.loadFromFile(new File(prefsPath));
+
+            String wsPrefix  = prefs.get("Directories", "Working Spaces");
+            String monPrefix = prefs.get("Directories", "Monitor Profiles");
+
+            String wsName  = prefs.get("Color Spaces", "Default Working Space");
+            String monName = prefs.get("Color Spaces", "Default Monitor Space");
+
+            String wsPath  = home + File.separator + wsPrefix + File.separator + wsName;
+            String monPath = home + File.separator + monPrefix + File.separator + monName;
+
+            String wdPath = prefs.get("Directories", "Default Image Directory");
+
+            wsProfilePath  = wsPath;
+            monProfilePath = monPath;
+
+            System.err.println("  Loading default working space [" + wsProfilePath + "]...");
+            System.err.println("  Loading default monitor profile [" + monProfilePath + "]...");
+
+            wsProfile  = ICC_Profile.getInstance(wsProfilePath);
+            monProfile = ICC_Profile.getInstance(monProfilePath);
+
+            workingDir = new File(wdPath);
+
+            // cme.initDeviceLink(wsPath, monPath);
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private final String prefsName = ".clearrc";
+    private       Prefs  prefs     = null;
+
+    private File workingDir = null;
+
+    private String      monProfilePath = null;
+    private String      wsProfilePath  = null;
+    private ICC_Profile monProfile     = null;
+    private ICC_Profile wsProfile      = null;
+
+
     public static void main ( String[] args )
     {
         if ( args.length < 1 )
@@ -276,7 +332,8 @@ public class ColorPanel
             com.crinqle.dlroom.codec.RawCodec codec = com.crinqle.dlroom.codec.RawCodec
                   .getInstance(new java.io.File(args[0]));
 
-            if ( null == codec ) {
+            if ( null == codec )
+            {
                 System.err.println("Could not create codec; aborting.");
                 System.exit(1);
             }
@@ -285,6 +342,16 @@ public class ColorPanel
             RawRaster   rr = new RawRaster(cd);
 
             ColorPanel cp = new ColorPanel();
+
+            // Use the preference code.
+
+            cp.loadPreferences();
+            final ICC_Profile imageProfile = cp.wsProfile;
+
+            // NOTE - Where is the color profile??
+            //  Needs a rr.setProfile(...); somewhere.
+
+            rr.setProfile(imageProfile);
             cp.setRawRaster(rr);
 
             JScrollPane scroller = new JScrollPane(cp);

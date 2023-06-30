@@ -52,7 +52,7 @@ run:			all
 
 .PHONY:'		t1
 t1:			all
-	java -Xmx1500m com.crinqle.dlroom.ColorPanel $(TEST_IMAGES) > /dev/null
+	java -Xmx1500m com.crinqle.dlroom.ColorPanel $(TEST_IMAGES)
 
 
 
