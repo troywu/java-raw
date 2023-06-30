@@ -108,7 +108,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 
 	public Main()
 	{
-		super("Digital Lightroom, Baby!");
+		super("Java Raw Decoder");
 
 		addWindowListener(this);
 
