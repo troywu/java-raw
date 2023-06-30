@@ -284,35 +284,13 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    public void windowClosing ( WindowEvent evt )
-    {
-        shutdown();
-    }
-
-    public void windowClosed ( WindowEvent evt )
-    {
-        shutdown();
-    }
-
-    public void windowOpened ( WindowEvent evt )
-    {
-    }
-
-    public void windowIconified ( WindowEvent evt )
-    {
-    }
-
-    public void windowDeiconified ( WindowEvent evt )
-    {
-    }
-
-    public void windowActivated ( WindowEvent evt )
-    {
-    }
-
-    public void windowDeactivated ( WindowEvent evt )
-    {
-    }
+    public void windowClosing ( WindowEvent evt ) { shutdown(); }
+    public void windowClosed ( WindowEvent evt ) { shutdown(); }
+    public void windowOpened ( WindowEvent evt ) {}
+    public void windowIconified ( WindowEvent evt ) {}
+    public void windowDeiconified ( WindowEvent evt ) {}
+    public void windowActivated ( WindowEvent evt ) {}
+    public void windowDeactivated ( WindowEvent evt ) {}
 
 
     /*
