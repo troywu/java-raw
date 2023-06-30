@@ -3,7 +3,7 @@ TARGET_FILE:=			file.list
 
 LDFLAGS:=			-shared -llcms
 
-JAVAC:=				/opt/java/bin/javac
+JAVAC:=				javac
 #JFLAGS:=			-source 1.5 -Xlint:unchecked
 
 CFLAGS:=			-g
@@ -48,7 +48,7 @@ libnativecme.so:		cms/nativecme.o
 
 .PHONY:			run
 run:			all
-	java -Xmx1500m dlroom.Main $(TEST_IMAGES) > /dev/null
+	java -Xmx1500m com.crinqle.dlroom.app.Main $(TEST_IMAGES) > /dev/null
 
 
 .PHONY:			clean
