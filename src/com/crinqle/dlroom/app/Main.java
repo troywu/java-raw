@@ -1,5 +1,6 @@
 package com.crinqle.dlroom.app;
 
+
 import java.awt.*;
 import java.awt.color.*;
 import java.awt.event.*;
@@ -20,36 +21,38 @@ import com.crinqle.dlroom.math.*;
 import com.crinqle.dlroom.util.*;
 
 
-public class Main extends JFrame implements ActionListener, WindowListener, LUTChangeListener, ListSelectionListener, RawRasterSelectionListener {
+
+public class Main extends JFrame implements ActionListener, WindowListener, LUTChangeListener, ListSelectionListener, RawRasterSelectionListener
+{
     /*
      * File menu
      */
-    private final JMenuItem newItem = new JMenuItem("New...", 'n');
-    private final JMenuItem openItem = new JMenuItem("Open...", 'o');
-    private final JMenuItem saveItem = new JMenuItem("Save", 's');
+    private final JMenuItem newItem    = new JMenuItem("New...", 'n');
+    private final JMenuItem openItem   = new JMenuItem("Open...", 'o');
+    private final JMenuItem saveItem   = new JMenuItem("Save", 's');
     private final JMenuItem saveAsItem = new JMenuItem("Save as...");
-    private final JMenuItem quitItem = new JMenuItem("Quit", 'q');
+    private final JMenuItem quitItem   = new JMenuItem("Quit", 'q');
 
     /*
      * Edit menu
      */
-    private final JMenuItem redoItem = new JMenuItem("Redo", 'y');
-    private final JMenuItem undoItem = new JMenuItem("Undo", 'u');
+    private final JMenuItem redoItem  = new JMenuItem("Redo", 'y');
+    private final JMenuItem undoItem  = new JMenuItem("Undo", 'u');
     private final JMenuItem applyItem = new JMenuItem("Apply Curves", ' ');
 
     /*
      * Color menu
      */
-    private final JMenuItem levelsItem = new JMenuItem("Levels...", 'l');
-    private final JMenuItem curvesItem = new JMenuItem("Curves...", 'c');
+    private final JMenuItem levelsItem  = new JMenuItem("Levels...", 'l');
+    private final JMenuItem curvesItem  = new JMenuItem("Curves...", 'c');
     private final JMenuItem monProfItem = new JMenuItem("Set Monitor Profile...", 'm');
     private final JMenuItem imageWSItem = new JMenuItem("Set Image Working Space...", 'i');
 
     /*
      * Raw menu
      */
-    private final JMenu rawMenu = new JMenu("Raw");
-    private final JMenuItem biasItem = new JMenuItem("Array Element Bias...", 'b');
+    private final JMenu     rawMenu    = new JMenu("Raw");
+    private final JMenuItem biasItem   = new JMenuItem("Array Element Bias...", 'b');
     private final JMenuItem interpItem = new JMenuItem("Interpolate", 'i');
 
     // private JMenuItem rawExportItem = new JMenuItem("Export...", 'e');
@@ -57,23 +60,23 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     // private JMenuItem rawImportItem = new JMenuItem("Import...", 'i');
 
     private final String prefsName = ".clearrc";
-    private Prefs prefs = null;
+    private       Prefs  prefs     = null;
 
     private File workingDir = null;
 
-    private String monProfilePath = null;
-    private String wsProfilePath = null;
-    private ICC_Profile monProfile = null;
-    private ICC_Profile wsProfile = null;
+    private String      monProfilePath = null;
+    private String      wsProfilePath  = null;
+    private ICC_Profile monProfile     = null;
+    private ICC_Profile wsProfile      = null;
 
     /*
      * Undo/Redo, current image, current temp image
      */
     private RasterStack undoStack = new RasterStack();
     private RasterStack redoStack = new RasterStack();
-    private RawRaster rr = null;
-    private RawRaster rrtemp = null;
-    private RawRaster srr = null;
+    private RawRaster   rr        = null;
+    private RawRaster   rrtemp    = null;
+    private RawRaster   srr       = null;
 
     /*
      * Listeners...
@@ -83,8 +86,8 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     /*
      * Panels...
      */
-    private JScrollPane scroller;
-    private JDesktopPane desktop;
+    private JScrollPane    scroller;
+    private JDesktopPane   desktop;
     private JInternalFrame frame;
 
     // public static final ColorModel DISPLAY_COLOR_MODEL = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
@@ -106,7 +109,8 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     // private JPanel levelPanel = null;
 
 
-    public Main() {
+    public Main()
+    {
         super("Java Raw Decoder");
 
         addWindowListener(this);
@@ -143,39 +147,43 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
      */
 
 
-    public void actionPerformed(ActionEvent evt) {
+    public void actionPerformed( ActionEvent evt )
+    {
         Object source = evt.getSource();
 
         /*
          * File menu
          */
-        if (source == quitItem) shutdown();
-        else if (source == newItem) f_new ();
-		else if (source == openItem) openDialog();
-        else if (source == saveItem) saveDialog();
-        else if (source == saveAsItem) saveAsDialog();
+        if ( source == quitItem ) shutdown();
+        else if ( source == newItem ) f_new();
+        else if ( source == openItem ) openDialog();
+        else if ( source == saveItem ) saveDialog();
+        else if ( source == saveAsItem ) saveAsDialog();
 
             /*
              * Edit menu
              */
-        else if (source == redoItem) redo();
-        else if (source == undoItem) undo();
-        else if (source == applyItem) apply();
+        else if ( source == redoItem ) redo();
+        else if ( source == undoItem ) undo();
+        else if ( source == applyItem ) apply();
 
             /*
              * Color menu
              */
-        else if (source == levelsItem) levelsDialog();
-        else if (source == curvesItem) curvesDialog();
-        else if (source == monProfItem) monProfDialog();
-        else if (source == imageWSItem) imageWorkingSpaceDialog();
+        else if ( source == levelsItem ) levelsDialog();
+        else if ( source == curvesItem ) curvesDialog();
+        else if ( source == monProfItem ) monProfDialog();
+        else if ( source == imageWSItem ) imageWorkingSpaceDialog();
 
             /*
              * Raw menu
              */
-        else if (source == biasItem) {
+        else if ( source == biasItem )
+        {
             biasDialog();
-        } else if (source == interpItem) {
+        }
+        else if ( source == interpItem )
+        {
             interpolate();
         }
 
@@ -184,18 +192,23 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    public void valueChanged(ListSelectionEvent evt) {
+    public void valueChanged( ListSelectionEvent evt )
+    {
         Object src = evt.getSource();
 
-        if (!evt.getValueIsAdjusting()) {
-            if (src instanceof JList) {
-                JList list = (JList) src;
-                Object obj = list.getSelectedValue();
+        if ( !evt.getValueIsAdjusting() )
+        {
+            if ( src instanceof JList )
+            {
+                JList  list = (JList)src;
+                Object obj  = list.getSelectedValue();
 
-                if (obj instanceof File) {
-                    File file = (File) obj;
+                if ( obj instanceof File )
+                {
+                    File file = (File)obj;
 
-                    if (file.isFile()) {
+                    if ( file.isFile() )
+                    {
                         System.err.println("  Trying to import raw file: " + file + "...");
 
                         loadImage(file);
@@ -206,10 +219,12 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void loadImage(File file) {
-        try {
-            RawCodec codec = RawCodec.getInstance(file);
-            CaptureData cd = codec.decode();
+    private void loadImage( File file )
+    {
+        try
+        {
+            RawCodec    codec = RawCodec.getInstance(file);
+            CaptureData cd    = codec.decode();
 
             final int bits = cd.getBits();
 
@@ -226,29 +241,34 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
             desktop.add(frame);
 
             displayImage();
-        } catch (Exception e) {
+        }
+        catch ( Exception e )
+        {
             e.printStackTrace();
             shutdown();
         }
     }
 
 
-    public void addBitDepthChangeListener(BitDepthChangeListener l) {
+    public void addBitDepthChangeListener( BitDepthChangeListener l )
+    {
         bdcls.add(l);
     }
 
-    public void fireBitDepthChangeEvent(Object source, int bits) {
+    public void fireBitDepthChangeEvent( Object source, int bits )
+    {
         System.out.println("  bit depth change: " + bits);
         Iterator iter = bdcls.iterator();
-        while (iter.hasNext()) ((BitDepthChangeListener) iter.next()).updateBits(source, bits);
+        while ( iter.hasNext() ) ((BitDepthChangeListener)iter.next()).updateBits(source, bits);
     }
 
 
-    public void applyLUT(Object source, LUT lut) {
-        if (rr == null)
+    public void applyLUT( Object source, LUT lut )
+    {
+        if ( rr == null )
             return;
 
-        if (rrtemp == null)
+        if ( rrtemp == null )
             rrtemp = rr.createCopy();
 
         rr.applyLUT(lut, rrtemp);
@@ -257,33 +277,41 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    public void subrasterSelected(Object source, RawRaster rr) {
+    public void subrasterSelected( Object source, RawRaster rr )
+    {
         System.out.println("Main.subrasterSelected()");
         srr = rr;
     }
 
 
-    public void windowClosing(WindowEvent evt) {
+    public void windowClosing( WindowEvent evt )
+    {
         shutdown();
     }
 
-    public void windowClosed(WindowEvent evt) {
+    public void windowClosed( WindowEvent evt )
+    {
         shutdown();
     }
 
-    public void windowOpened(WindowEvent evt) {
+    public void windowOpened( WindowEvent evt )
+    {
     }
 
-    public void windowIconified(WindowEvent evt) {
+    public void windowIconified( WindowEvent evt )
+    {
     }
 
-    public void windowDeiconified(WindowEvent evt) {
+    public void windowDeiconified( WindowEvent evt )
+    {
     }
 
-    public void windowActivated(WindowEvent evt) {
+    public void windowActivated( WindowEvent evt )
+    {
     }
 
-    public void windowDeactivated(WindowEvent evt) {
+    public void windowDeactivated( WindowEvent evt )
+    {
     }
 
 
@@ -296,45 +324,50 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
      */
 
 
-    private void loadPreferences() {
+    private void loadPreferences()
+    {
         String prefsPath = System.getProperty("user.home") + File.separator + prefsName;
 
         System.err.println("Loading application prefs from: " + prefsPath);
 
-        try {
+        try
+        {
             prefs = Prefs.loadFromFile(new File(prefsPath));
 
-            String wsPrefix = prefs.get("Directories", "Working Spaces");
+            String wsPrefix  = prefs.get("Directories", "Working Spaces");
             String monPrefix = prefs.get("Directories", "Monitor Profiles");
 
-            String wsName = prefs.get("Color Spaces", "Default Working Space");
+            String wsName  = prefs.get("Color Spaces", "Default Working Space");
             String monName = prefs.get("Color Spaces", "Default Monitor Space");
 
-            String wsPath = wsPrefix + File.separator + wsName;
+            String wsPath  = wsPrefix + File.separator + wsName;
             String monPath = monPrefix + File.separator + monName;
 
             String wdPath = prefs.get("Directories", "Default Image Directory");
 
-            wsProfilePath = wsPath;
+            wsProfilePath  = wsPath;
             monProfilePath = monPath;
 
             System.err.println("  Loading default working space [" + wsProfilePath + "]...");
             System.err.println("  Loading default monitor profile [" + monProfilePath + "]...");
 
-            wsProfile = ICC_Profile.getInstance(wsProfilePath);
+            wsProfile  = ICC_Profile.getInstance(wsProfilePath);
             monProfile = ICC_Profile.getInstance(monProfilePath);
 
             workingDir = new File(wdPath);
 
             // cme.initDeviceLink(wsPath, monPath);
-        } catch (Exception e) {
+        }
+        catch ( Exception e )
+        {
             e.printStackTrace();
             System.exit(1);
         }
     }
 
 
-    private void initMenus() {
+    private void initMenus()
+    {
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic('f');
         fileMenu.add(newItem);
@@ -421,7 +454,8 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void initEditPanels() {
+    private void initEditPanels()
+    {
         // JPanel dirPanel = new FileListPanel(workingDir, FileListPanel.DIRS);
         // JPanel filePanel = new FileListPanel(workingDir);
         FileChooserPanel fileChooser = new FileChooserPanel(workingDir);
@@ -474,9 +508,9 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         levelPanel.add(levelB);
         levelPanel.add(levelH);
 
-        GridBagLayout bag = new GridBagLayout();
-        GridBagConstraints gc = new GridBagConstraints();
-        JPanel editPanel = new JPanel();
+        GridBagLayout      bag       = new GridBagLayout();
+        GridBagConstraints gc        = new GridBagConstraints();
+        JPanel             editPanel = new JPanel();
 
 		/*
 		editPanel.setBorder(new EmptyBorder(10,10,10,10));
@@ -529,49 +563,59 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void apply() {
-        if (rrtemp != null) {
-            if (rrtemp == null) return;
+    private void apply()
+    {
+        if ( rrtemp != null )
+        {
+            if ( rrtemp == null ) return;
             push();
-            rr = rrtemp;
+            rr     = rrtemp;
             rrtemp = null;
         }
     }
 
-    private void interpolate() {
-        if (rr == null) return;
-        try {
+    private void interpolate()
+    {
+        if ( rr == null ) return;
+        try
+        {
             push();
             rr = rr.createCopy();
             rr.interpolate(ALL_MASK);
             displayImage();
-        } catch (Exception e) {
+        }
+        catch ( Exception e )
+        {
             e.printStackTrace();
             System.exit(1);
         }
     }
 
 
-    private void push() {
+    private void push()
+    {
         undoStack.push(rr);
     }
 
-    private void undo() {
-        if (undoStack.empty()) return;
+    private void undo()
+    {
+        if ( undoStack.empty() ) return;
         redoStack.push(rr);
         rr = undoStack.pop();
         displayImage();
     }
 
-    private void redo() {
-        if (redoStack.empty()) return;
+    private void redo()
+    {
+        if ( redoStack.empty() ) return;
         undoStack.push(rr);
         rr = redoStack.pop();
         displayImage();
     }
 
 
-    private void displayImage(RawRaster raster) {
+    private void displayImage( RawRaster raster )
+    {
         // raster = colorConvert(raster);
 
         ColorPanel cp = new ColorPanel();
@@ -590,40 +634,48 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         // scroller.repaint();
 
         frame.add(scroller);
-        try {
+        try
+        {
             frame.setMaximum(true);
-        } catch (Exception e) {
+        }
+        catch ( Exception e )
+        {
         }
         frame.setVisible(true);
     }
 
-    private void displayImage() {
+    private void displayImage()
+    {
         displayImage(rr);
     }
 
 
-    private void levelsDialog() {
+    private void levelsDialog()
+    {
         System.out.println("  Adjusting levels...");
     }
 
-    private void curvesDialog() {
+    private void curvesDialog()
+    {
         System.out.println("  Adjusting curves...");
     }
 
-    private void biasDialog() {
+    private void biasDialog()
+    {
         System.out.println("  Adjusting levels...");
     }
 
 
-    private void monProfDialog() {
+    private void monProfDialog()
+    {
         JFileChooser dialog = new JFileChooser(".");
 
         int status = dialog.showOpenDialog(this);
 
-        if (status != JFileChooser.APPROVE_OPTION)
+        if ( status != JFileChooser.APPROVE_OPTION )
             return;
 
-        final File file = dialog.getSelectedFile();
+        final File   file     = dialog.getSelectedFile();
         final String filename = file.getPath();
 
         System.err.println("Loading monitor profile " + filename + "...");
@@ -631,15 +683,16 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         monProfilePath = filename;
     }
 
-    private void imageWorkingSpaceDialog() {
+    private void imageWorkingSpaceDialog()
+    {
         JFileChooser dialog = new JFileChooser(".");
 
         int status = dialog.showOpenDialog(this);
 
-        if (status != JFileChooser.APPROVE_OPTION)
+        if ( status != JFileChooser.APPROVE_OPTION )
             return;
 
-        final File file = dialog.getSelectedFile();
+        final File   file     = dialog.getSelectedFile();
         final String filename = file.getPath();
 
         System.err.println("Loading image color space " + filename + "...");
@@ -650,7 +703,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 
     private void f_new()
     {
-        if (srr == null)
+        if ( srr == null )
             return;
 
         ICC_Profile profile = rr.getProfile();
@@ -659,7 +712,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         rr.setProfile(profile);
 
         rrtemp = null;
-        srr = null;
+        srr    = null;
 
         undoStack.removeAllElements();
         redoStack.removeAllElements();
@@ -669,29 +722,31 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         displayImage();
     }
 
-    private void openDialog() {
-        if (wsProfilePath == null)
+    private void openDialog()
+    {
+        if ( wsProfilePath == null )
             imageWorkingSpaceDialog();
 
         JFileChooser dialog = new JFileChooser(".");
 
         int status = dialog.showOpenDialog(this);
 
-        if (status != JFileChooser.APPROVE_OPTION)
+        if ( status != JFileChooser.APPROVE_OPTION )
             return;
 
-        File file = dialog.getSelectedFile();
+        File         file     = dialog.getSelectedFile();
         final String filename = file.getPath() + ".cpf";
         file = new File(filename);
 
         System.err.println("Opening CPF " + file.getPath() + "...");
 
-        try {
+        try
+        {
             final long length = file.length();
-            byte[] array = new byte[(int) length];
+            byte[]     array  = new byte[(int)length];
 
             System.err.println("  Size of CPF: " + length);
-            System.err.println("  Created large array for CPF processing: (" + (int) length + " bytes).");
+            System.err.println("  Created large array for CPF processing: (" + (int)length + " bytes).");
 
             DataInputStream stream = new DataInputStream(new FileInputStream(file));
             stream.readFully(array);
@@ -706,68 +761,80 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
             // rr = rr.get3ColorRGBRaster();
 
             displayImage();
-        } catch (Exception e) {
+        }
+        catch ( Exception e )
+        {
             e.printStackTrace();
             shutdown();
         }
     }
 
 
-    private void rawExportDialog() {
+    private void rawExportDialog()
+    {
         JFileChooser dialog = new JFileChooser(".");
 
         int status = dialog.showSaveDialog(this);
 
-        if (status != JFileChooser.APPROVE_OPTION)
+        if ( status != JFileChooser.APPROVE_OPTION )
             return;
 
-        final File file = dialog.getSelectedFile();
+        final File   file     = dialog.getSelectedFile();
         final String filename = file.getPath() + ".cpf";
 
         System.err.println("Opening " + filename + "...");
 
-        try {
+        try
+        {
             FileOutputStream stream = new FileOutputStream(new File(filename));
 
             ColorPPMFile.encode(rr, stream);
-        } catch (Exception e) {
+        }
+        catch ( Exception e )
+        {
             e.printStackTrace();
             shutdown();
         }
     }
 
 
-    private void saveDialog() {
+    private void saveDialog()
+    {
         saveAsDialog();
     }
 
-    private void saveAsDialog() {
+    private void saveAsDialog()
+    {
         JFileChooser dialog = new JFileChooser(".");
 
         int status = dialog.showSaveDialog(this);
 
-        if (status != JFileChooser.APPROVE_OPTION)
+        if ( status != JFileChooser.APPROVE_OPTION )
             return;
 
-        final File file = dialog.getSelectedFile();
+        final File   file     = dialog.getSelectedFile();
         final String filename = file.getPath() + ".cpf";
 
         System.err.println("Saving " + filename + "...");
 
-        try {
+        try
+        {
             System.err.println("Saving as: raster: " + rr);
 
             FileOutputStream stream = new FileOutputStream(new File(filename));
 
             ColorPPMFile.encode(rr, stream);
-        } catch (Exception e) {
+        }
+        catch ( Exception e )
+        {
             e.printStackTrace();
             shutdown();
         }
     }
 
 
-    private void shutdown() { /* if ( cme != null ) { try { cme.dispose(); } catch ( Exception e ) { e.printStackTrace(); } } */
+    private void shutdown()
+    { /* if ( cme != null ) { try { cme.dispose(); } catch ( Exception e ) { e.printStackTrace(); } } */
         dispose();
         System.exit(0);
     }
@@ -782,7 +849,8 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
      */
 
 
-    public static void main(String[] args) {
+    public static void main( String[] args )
+    {
         Main app = new Main();
 
         app.setSize(2048, 2048);
@@ -812,7 +880,8 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 		*/
 
 
-    private RawRaster colorConvert(RawRaster src) {
+    private RawRaster colorConvert( RawRaster src )
+    {
         // if ( cme == null )
         // return src;
 
