@@ -1,10 +1,18 @@
-Java RAW-Image Decoder
+Java Raw Image Decoder
 =
 
-This project features a Java RAW-image decoder with a UI to change gamma.  RAW-images are "raw" images from certain high-end digital cameras.  They are lossless formats which retain all the sensor information without lossy compression that would be suffered if output to a lossy compression format (e.g., JPEG).  It's not a finished project; it's just an example of an object-oriented port of a RAW image decoder written in C.
+The original project which inspired this work is [DCRAW](https://dechifro.org/dcraw/) by Dave Coffin.  Please pay him a visit; his work is a great inspiration of contributing hard-earned knowledge.  Through a short email, Dave pointed me toward Huffman encodings (this code was first written back in ~2002, but finally uploaded to GitHub in 2012.
 
-The original project which inspired my port is [DCRAW](https://dechifro.org/dcraw/) by Dave Coffin.  Please pay him a visit; his work is a great inspiration of contributing hard-earned knowledge.
+This project features a Java raw decoder with a UI to change gamma.  Raw images are lossless, generally high-bit-depth files from digital cameras.  They retain all the sensor information without lossy compression (e.g., JPEG).  This port isn't a finished project; it's just an example of a Java port of some awesome-yet-gnarly C code (which does the hard work of decoding the custom raw formats, and I've only verified my port against my own Canon CRW and CR2 images, even though Dave's original work decodes dozens of formats.
 
-There are interesting parts of this code, particularly in the various iterators that traverse the image (similar to a convolution kernel), in the handling of the raw-image-data (in a format which would have benefitted from hardware acceleration), the move toward ICC color-management, and also in the abstractions of the Bayer sensor mosaic filter.  There is also a Swing component that visualizes the image, and a little gamma adjuster.
+There are interesting parts of this code, which isn't the decoding port, that tries to show some object-oriented but low-level image-handling.  I happen to like the various iterators that traverse the image (in a way similar to how a convolution kernel processes images), in the handling of the raw-image-data.  Some considerations in its design included:
 
-I dropped work on the project as Apple and Adobe simultaneously released their digital asset management systems in the form of Aperture and Lightroom.  This project was still incredibly exciting, and filled with technical challenges.  It is in a state of disrepair at the moment, due to abrupt RL demands; sometime in the near future, I would like to get the code compiling again; if only to see it work myself.  It feels a bit 'dirty' to leave code in a half-baked(able) state...
+* Choosing an in-memory data format which would benefit from hardware acceleration
+* Using ICC color-management through the use of Swing libraries
+* Abstraction of the Bayer sensor mosaic filter
+* Demo'ing the image-handling with a Swing component that visualizes the image
+* Demo'ing some image post-processing with a little gamma adjuster.
+
+I dropped work on the project as Apple and Adobe simultaneously released their digital asset management systems in the form of Aperture and Lightroom.  This project was still incredibly exciting, and filled with technical challenges.  It is in a state of disrepair, (last attended to back in prob 2007)!, due to then-abrupt RL demands; sometime in the distance future, I would like to get the code compiling again; if only to see it work myself.
+
+Thanks, Dave.
