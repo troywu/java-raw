@@ -12,6 +12,7 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 
 import static com.crinqle.dlroom.Const.*;
+
 import com.crinqle.dlroom.*;
 import com.crinqle.dlroom.codec.*;
 import com.crinqle.dlroom.event.*;
@@ -19,446 +20,463 @@ import com.crinqle.dlroom.math.*;
 import com.crinqle.dlroom.util.*;
 
 
-public class Main extends JFrame implements ActionListener, WindowListener, LUTChangeListener, ListSelectionListener, RawRasterSelectionListener
-{
-	/*
-	 * File menu
-	 */
-	private JMenuItem f_newItem = new JMenuItem("New...", 'n');
-	private JMenuItem f_openItem = new JMenuItem("Open...", 'o');
-	private JMenuItem f_saveItem = new JMenuItem("Save", 's');
-	private JMenuItem f_saveAsItem = new JMenuItem("Save as...");
-	private JMenuItem f_quitItem = new JMenuItem("Quit", 'q');
-
-	/*
-	 * Edit menu
-	 */
-	private JMenuItem f_redoItem = new JMenuItem("Redo", 'y');
-	private JMenuItem f_undoItem = new JMenuItem("Undo", 'u');
-	private JMenuItem f_applyItem = new JMenuItem("Apply Curves", ' ');
-
-	/*
-	 * Color menu
-	 */
-	private JMenuItem f_levelsItem = new JMenuItem("Levels...", 'l');
-	private JMenuItem f_curvesItem = new JMenuItem("Curves...", 'c');
-	private JMenuItem f_monProfItem = new JMenuItem("Set Monitor Profile...", 'm');
-	private JMenuItem f_imageWSItem = new JMenuItem("Set Image Working Space...", 'i');
-
-	/*
-	 * Raw menu
-	 */
-	private JMenu f_rawMenu = new JMenu("Raw");
-	private JMenuItem f_biasItem = new JMenuItem("Array Element Bias...", 'b');
-	private JMenuItem f_interpItem = new JMenuItem("Interpolate", 'i');
-
-	// private JMenuItem f_rawExportItem = new JMenuItem("Export...", 'e');
-	// private JMenuItem f_monGammaItem = new JMenuItem("Adjust Monitor Gamma", 'g');
-	// private JMenuItem f_rawImportItem = new JMenuItem("Import...", 'i');
-
-	private final String f_prefsName = ".clearrc";
-	private Prefs f_prefs = null;
-
-	private File f_workingDir = null;
-
-	private String f_monProfilePath = null;
-	private String f_wsProfilePath = null;
-	private ICC_Profile f_monProfile = null;
-	private ICC_Profile f_wsProfile = null;
-
-	/*
-	 * Undo/Redo, current image, current temp image
-	 */
-	private RasterStack f_undoStack = new RasterStack();
-	private RasterStack f_redoStack = new RasterStack();
-	private RawRaster f_rr = null;
-	private RawRaster f_rrtemp = null;
-	private RawRaster f_srr = null;
-
-	/*
-	 * Listeners...
-	 */
-	private Collection<BitDepthChangeListener> f_bdcls = new LinkedList<BitDepthChangeListener>();
-
-	/*
-	 * Panels...
-	 */
-	private JScrollPane f_scroller;
-	private JDesktopPane f_desktop;
-	private JInternalFrame f_frame;
-
-	// public static final ColorModel DISPLAY_COLOR_MODEL = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
-	// private CME f_cme = CME.getInstance();
-
-	// private ColorPanel f_cp = new ColorPanel();
-	// private JFileChooser f_fileChooser = null;
-
-	// private CurvePanel f_curveR = null;
-	// private CurvePanel f_curveG = null;
-	// private CurvePanel f_curveB = null;
-	// private CurvePanel f_curveComp = null;
-	// private JTabbedPane f_curveTabs = null;
-
-	// private JSlider f_levelR = null;
-	// private JSlider f_levelG = null;
-	// private JSlider f_levelB = null;
-	// private JSlider f_levelH = null;
-	// private JPanel f_levelPanel = null;
-
-
-	public Main()
-	{
-		super("Java Raw Decoder");
-
-		addWindowListener(this);
-
-		f_loadPreferences();
-		f_initMenus();
-		// f_initEditPanels();
-
-		FileChooserPanel fileChooser = new FileChooserPanel(f_workingDir);
-		fileChooser.addListSelectionListener(this);
-
-		JPanel imagePanel = new JPanel();
-		imagePanel.setLayout(new GridLayout(1,1));
-		imagePanel.setBackground(Color.white);
-		imagePanel.setPreferredSize(new Dimension(2000, 1000));
-
-		f_scroller = new JScrollPane(imagePanel);
-
-		f_desktop = new JDesktopPane();
-		f_desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
-
-		JSplitPane splitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, false, fileChooser, f_desktop);
-
-		add(splitter);
-	}
-
-
-	/*
-	 * **************************************************
-	 *
-	 * INTERFACES
-	 *
-	 * **************************************************
-	 */
+public class Main extends JFrame implements ActionListener, WindowListener, LUTChangeListener, ListSelectionListener, RawRasterSelectionListener {
+    /*
+     * File menu
+     */
+    private final JMenuItem newItem = new JMenuItem("New...", 'n');
+    private final JMenuItem openItem = new JMenuItem("Open...", 'o');
+    private final JMenuItem saveItem = new JMenuItem("Save", 's');
+    private final JMenuItem saveAsItem = new JMenuItem("Save as...");
+    private final JMenuItem quitItem = new JMenuItem("Quit", 'q');
+
+    /*
+     * Edit menu
+     */
+    private final JMenuItem redoItem = new JMenuItem("Redo", 'y');
+    private final JMenuItem undoItem = new JMenuItem("Undo", 'u');
+    private final JMenuItem applyItem = new JMenuItem("Apply Curves", ' ');
+
+    /*
+     * Color menu
+     */
+    private final JMenuItem levelsItem = new JMenuItem("Levels...", 'l');
+    private final JMenuItem curvesItem = new JMenuItem("Curves...", 'c');
+    private final JMenuItem monProfItem = new JMenuItem("Set Monitor Profile...", 'm');
+    private final JMenuItem imageWSItem = new JMenuItem("Set Image Working Space...", 'i');
+
+    /*
+     * Raw menu
+     */
+    private final JMenu rawMenu = new JMenu("Raw");
+    private final JMenuItem biasItem = new JMenuItem("Array Element Bias...", 'b');
+    private final JMenuItem interpItem = new JMenuItem("Interpolate", 'i');
+
+    // private JMenuItem rawExportItem = new JMenuItem("Export...", 'e');
+    // private JMenuItem monGammaItem = new JMenuItem("Adjust Monitor Gamma", 'g');
+    // private JMenuItem rawImportItem = new JMenuItem("Import...", 'i');
+
+    private final String prefsName = ".clearrc";
+    private Prefs prefs = null;
+
+    private File workingDir = null;
+
+    private String monProfilePath = null;
+    private String wsProfilePath = null;
+    private ICC_Profile monProfile = null;
+    private ICC_Profile wsProfile = null;
+
+    /*
+     * Undo/Redo, current image, current temp image
+     */
+    private RasterStack undoStack = new RasterStack();
+    private RasterStack redoStack = new RasterStack();
+    private RawRaster rr = null;
+    private RawRaster rrtemp = null;
+    private RawRaster srr = null;
+
+    /*
+     * Listeners...
+     */
+    private Collection<BitDepthChangeListener> bdcls = new LinkedList<BitDepthChangeListener>();
+
+    /*
+     * Panels...
+     */
+    private JScrollPane scroller;
+    private JDesktopPane desktop;
+    private JInternalFrame frame;
+
+    // public static final ColorModel DISPLAY_COLOR_MODEL = new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);
+    // private CME cme = CME.getInstance();
+
+    // private ColorPanel cp = new ColorPanel();
+    // private JFileChooser fileChooser = null;
+
+    // private CurvePanel curveR = null;
+    // private CurvePanel curveG = null;
+    // private CurvePanel curveB = null;
+    // private CurvePanel curveComp = null;
+    // private JTabbedPane curveTabs = null;
+
+    // private JSlider levelR = null;
+    // private JSlider levelG = null;
+    // private JSlider levelB = null;
+    // private JSlider levelH = null;
+    // private JPanel levelPanel = null;
+
+
+    public Main() {
+        super("Java Raw Decoder");
+
+        addWindowListener(this);
+
+        loadPreferences();
+        initMenus();
+        // initEditPanels();
+
+        FileChooserPanel fileChooser = new FileChooserPanel(workingDir);
+        fileChooser.addListSelectionListener(this);
+
+        JPanel imagePanel = new JPanel();
+        imagePanel.setLayout(new GridLayout(1, 1));
+        imagePanel.setBackground(Color.white);
+        imagePanel.setPreferredSize(new Dimension(2000, 1000));
 
+        scroller = new JScrollPane(imagePanel);
 
-	public void actionPerformed ( ActionEvent evt )
-	{
-		Object source = evt.getSource();
+        desktop = new JDesktopPane();
+        desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
 
-		/*
-		 * File menu
-		 */
-		if ( source == f_quitItem ) f_shutdown();
-		else if ( source == f_newItem ) f_new();
-		else if ( source == f_openItem ) f_openDialog();
-		else if ( source == f_saveItem ) f_saveDialog();
-		else if ( source == f_saveAsItem ) f_saveAsDialog();
+        JSplitPane splitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, false, fileChooser, desktop);
+
+        add(splitter);
+    }
 
-		/*
-		 * Edit menu
-		 */
-		else if ( source == f_redoItem ) f_redo();
-		else if ( source == f_undoItem ) f_undo();
-		else if ( source == f_applyItem ) f_apply();
 
-		/*
-		 * Color menu
-		 */
-		else if ( source == f_levelsItem ) f_levelsDialog();
-		else if ( source == f_curvesItem ) f_curvesDialog();
-		else if ( source == f_monProfItem ) f_monProfDialog();
-		else if ( source == f_imageWSItem ) f_imageWorkingSpaceDialog();
+    /*
+     * **************************************************
+     *
+     * INTERFACES
+     *
+     * **************************************************
+     */
+
+
+    public void actionPerformed(ActionEvent evt) {
+        Object source = evt.getSource();
 
-		/*
-		 * Raw menu
-		 */
-		else if ( source == f_biasItem ) { f_biasDialog(); }
-		else if ( source == f_interpItem ) { f_interpolate(); }
+        /*
+         * File menu
+         */
+        if (source == quitItem) shutdown();
+        else if (source == newItem) f_new ();
+		else if (source == openItem) openDialog();
+        else if (source == saveItem) saveDialog();
+        else if (source == saveAsItem) saveAsDialog();
 
-		// else if ( source == f_rawExportItem ) f_rawExportDialog();
-		// else if ( source == f_rawImportItem ) f_rawImportDialog();
-	}
+            /*
+             * Edit menu
+             */
+        else if (source == redoItem) redo();
+        else if (source == undoItem) undo();
+        else if (source == applyItem) apply();
 
+            /*
+             * Color menu
+             */
+        else if (source == levelsItem) levelsDialog();
+        else if (source == curvesItem) curvesDialog();
+        else if (source == monProfItem) monProfDialog();
+        else if (source == imageWSItem) imageWorkingSpaceDialog();
 
-	public void valueChanged ( ListSelectionEvent evt )
-	{
-		Object src = evt.getSource();
+            /*
+             * Raw menu
+             */
+        else if (source == biasItem) {
+            biasDialog();
+        } else if (source == interpItem) {
+            interpolate();
+        }
 
-		if ( ! evt.getValueIsAdjusting() )
-		{
-			if ( src instanceof JList )
-			{
-				JList list = (JList)src;
-				Object obj = list.getSelectedValue();
+        // else if ( source == rawExportItem ) rawExportDialog();
+        // else if ( source == rawImportItem ) rawImportDialog();
+    }
 
-				if ( obj instanceof File )
-				{
-					File file = (File)obj;
 
-					if ( file.isFile() )
-					{
-						System.err.println("  Trying to import raw file: " + file + "...");
+    public void valueChanged(ListSelectionEvent evt) {
+        Object src = evt.getSource();
 
-						f_loadImage(file);
-					}
-				}
-			}
-		}
-	}
+        if (!evt.getValueIsAdjusting()) {
+            if (src instanceof JList) {
+                JList list = (JList) src;
+                Object obj = list.getSelectedValue();
 
+                if (obj instanceof File) {
+                    File file = (File) obj;
 
-	private void f_loadImage ( File file )
-	{
-		try
-		{
-			RawCodec codec = RawCodec.getInstance(file);
-			CaptureData cd = codec.decode();
+                    if (file.isFile()) {
+                        System.err.println("  Trying to import raw file: " + file + "...");
 
-			final int bits = cd.getBits();
+                        loadImage(file);
+                    }
+                }
+            }
+        }
+    }
 
-			f_rr = new RawRaster(cd);
-			f_rr.setProfile(f_wsProfile);
 
-			f_rrtemp = null;
-			f_undoStack.removeAllElements();
-			f_redoStack.removeAllElements();
+    private void loadImage(File file) {
+        try {
+            RawCodec codec = RawCodec.getInstance(file);
+            CaptureData cd = codec.decode();
 
-			fireBitDepthChangeEvent(cd, bits);
+            final int bits = cd.getBits();
 
-			f_frame = new JInternalFrame(file.getPath());
-			f_desktop.add(f_frame);
+            rr = new RawRaster(cd);
+            rr.setProfile(wsProfile);
 
-			f_displayImage();
-		}
-		catch ( Exception e ) { e.printStackTrace(); f_shutdown(); }
-	}
+            rrtemp = null;
+            undoStack.removeAllElements();
+            redoStack.removeAllElements();
 
+            fireBitDepthChangeEvent(cd, bits);
 
-	public void addBitDepthChangeListener ( BitDepthChangeListener l ) { f_bdcls.add(l); }
-	public void fireBitDepthChangeEvent ( Object source, int bits ) { System.out.println("  bit depth change: " + bits); Iterator iter = f_bdcls.iterator(); while ( iter.hasNext() ) ((BitDepthChangeListener)iter.next()).updateBits(source, bits); }
+            frame = new JInternalFrame(file.getPath());
+            desktop.add(frame);
 
+            displayImage();
+        } catch (Exception e) {
+            e.printStackTrace();
+            shutdown();
+        }
+    }
 
-	public void applyLUT ( Object source, LUT lut )
-	{
-		if ( f_rr == null )
-			return;
 
-		if ( f_rrtemp == null )
-			f_rrtemp = f_rr.createCopy();
+    public void addBitDepthChangeListener(BitDepthChangeListener l) {
+        bdcls.add(l);
+    }
 
-		f_rr.applyLUT(lut, f_rrtemp);
+    public void fireBitDepthChangeEvent(Object source, int bits) {
+        System.out.println("  bit depth change: " + bits);
+        Iterator iter = bdcls.iterator();
+        while (iter.hasNext()) ((BitDepthChangeListener) iter.next()).updateBits(source, bits);
+    }
 
-		f_displayImage(f_rrtemp);
-	}
 
+    public void applyLUT(Object source, LUT lut) {
+        if (rr == null)
+            return;
 
-	public void subrasterSelected ( Object source, RawRaster rr ) { System.out.println("Main.subrasterSelected()"); f_srr = rr; }
+        if (rrtemp == null)
+            rrtemp = rr.createCopy();
 
+        rr.applyLUT(lut, rrtemp);
 
-	public void windowClosing( WindowEvent evt ) { f_shutdown(); }
-	public void windowClosed ( WindowEvent evt ) { f_shutdown(); }
-	public void windowOpened ( WindowEvent evt ) {}
-	public void windowIconified ( WindowEvent evt ) {}
-	public void windowDeiconified ( WindowEvent evt ) {}
-	public void windowActivated ( WindowEvent evt ) {}
-	public void windowDeactivated ( WindowEvent evt ) {}
+        displayImage(rrtemp);
+    }
 
 
-	/*
-	 * **************************************************
-	 *
-	 * PRIVATE
-	 *
-	 * **************************************************
-	 */
+    public void subrasterSelected(Object source, RawRaster rr) {
+        System.out.println("Main.subrasterSelected()");
+        srr = rr;
+    }
 
 
-	private void f_loadPreferences()
-	{
-		String prefsPath = System.getProperty("user.home") + File.separator + f_prefsName;
+    public void windowClosing(WindowEvent evt) {
+        shutdown();
+    }
 
-		System.err.println("Loading application prefs from: " + prefsPath);
+    public void windowClosed(WindowEvent evt) {
+        shutdown();
+    }
 
-		try
-		{
-			f_prefs = Prefs.loadFromFile(new File(prefsPath));
+    public void windowOpened(WindowEvent evt) {
+    }
 
-			String wsPrefix = f_prefs.get("Directories", "Working Spaces");
-			String monPrefix = f_prefs.get("Directories", "Monitor Profiles");
+    public void windowIconified(WindowEvent evt) {
+    }
 
-			String wsName = f_prefs.get("Color Spaces", "Default Working Space");
-			String monName = f_prefs.get("Color Spaces", "Default Monitor Space");
+    public void windowDeiconified(WindowEvent evt) {
+    }
 
-			String wsPath = wsPrefix + File.separator + wsName;
-			String monPath = monPrefix + File.separator + monName;
+    public void windowActivated(WindowEvent evt) {
+    }
 
-			String wdPath = f_prefs.get("Directories", "Default Image Directory");
+    public void windowDeactivated(WindowEvent evt) {
+    }
 
-			f_wsProfilePath = wsPath;
-			f_monProfilePath = monPath;
 
-			System.err.println("  Loading default working space [" + f_wsProfilePath + "]...");
-			System.err.println("  Loading default monitor profile [" + f_monProfilePath + "]...");
+    /*
+     * **************************************************
+     *
+     * PRIVATE
+     *
+     * **************************************************
+     */
 
-			f_wsProfile = ICC_Profile.getInstance(f_wsProfilePath);
-			f_monProfile = ICC_Profile.getInstance(f_monProfilePath);
 
-			f_workingDir = new File(wdPath);
+    private void loadPreferences() {
+        String prefsPath = System.getProperty("user.home") + File.separator + prefsName;
 
-			// f_cme.initDeviceLink(wsPath, monPath);
-		}
-		catch ( Exception e ) { e.printStackTrace(); System.exit(1); }
-	}
+        System.err.println("Loading application prefs from: " + prefsPath);
 
+        try {
+            prefs = Prefs.loadFromFile(new File(prefsPath));
 
-	private void f_initMenus()
-	{
-		JMenu fileMenu = new JMenu("File");
-		fileMenu.setMnemonic('f');
-		fileMenu.add(f_newItem);
-		fileMenu.add(f_openItem);
-		fileMenu.add(f_saveItem);
-		fileMenu.add(f_saveAsItem);
-		fileMenu.addSeparator();
-		fileMenu.add(f_quitItem);
-
-		f_newItem.addActionListener(this);
-		f_openItem.addActionListener(this);
-		f_saveItem.addActionListener(this);
-		f_saveAsItem.addActionListener(this);
-		f_quitItem.addActionListener(this);
+            String wsPrefix = prefs.get("Directories", "Working Spaces");
+            String monPrefix = prefs.get("Directories", "Monitor Profiles");
 
-		f_newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
-		f_openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
-		f_saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
-		f_quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+            String wsName = prefs.get("Color Spaces", "Default Working Space");
+            String monName = prefs.get("Color Spaces", "Default Monitor Space");
 
-		JMenu editMenu = new JMenu("Edit");
-		editMenu.setMnemonic('e');
-		editMenu.add(f_redoItem);
-		editMenu.add(f_undoItem);
-		editMenu.addSeparator();
-		editMenu.add(f_applyItem);
-
-		f_redoItem.addActionListener(this);
-		f_undoItem.addActionListener(this);
-		f_applyItem.addActionListener(this);
-
-		f_redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
-		f_undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
-		f_applyItem.setAccelerator(KeyStroke.getKeyStroke(' ')); // KeyEvent.VK_Z, InputEvent.CTRL_MASK));
-
-		JMenu colorMenu = new JMenu("Color");
-		colorMenu.setMnemonic('c');
-		colorMenu.add(f_levelsItem);
-		colorMenu.add(f_curvesItem);
-		colorMenu.addSeparator();
-		colorMenu.add(f_monProfItem);
-		colorMenu.add(f_imageWSItem);
-
-		f_levelsItem.addActionListener(this);
-		f_curvesItem.addActionListener(this);
-		f_monProfItem.addActionListener(this);
-		f_imageWSItem.addActionListener(this);
-
-		f_levelsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
-		f_curvesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
-
-		f_rawMenu.setEnabled(false);
-		f_rawMenu.setMnemonic('r');
-		f_rawMenu.add(f_biasItem);
-		f_rawMenu.add(f_interpItem);
-
-		f_biasItem.addActionListener(this);
-		f_interpItem.addActionListener(this);
-
-		f_biasItem.setAccelerator(KeyStroke.getKeyStroke('b')); // KeyEvent.VK_B, InputEvent.CTRL_MASK));
-		f_interpItem.setAccelerator(KeyStroke.getKeyStroke('i')); // KeyEvent.VK_I, InputEvent.CTRL_MASK));
-
-		JMenu spacerMenu = new JMenu();
-		spacerMenu.setEnabled(false);
-
-		JMenuBar menuBar = new JMenuBar();
-		menuBar.add(fileMenu);
-		menuBar.add(editMenu);
-		menuBar.add(colorMenu);
-		menuBar.add(spacerMenu);
-		menuBar.add(f_rawMenu);
-
-		setJMenuBar(menuBar);
-
-		// f_monGammaItem.addActionListener(this);
-		// f_rawMenu.add(f_rawExportItem);
-		// colorMenu.add(f_monGammaItem);
-		// f_monGammaItem.setAccelerator(KeyStroke.getKeyStroke('g')); // KeyEvent.VK_G, InputEvent.CTRL_MASK));
-		// f_undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
-		// f_undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.getKeyChar(KeyEvent.VK_ESCAPE))); // KeyEvent.VK_Z, InputEvent.CTRL_MASK));
-		// f_rawMenu.add(f_rawImportItem);
-		// f_rawExportItem.addActionListener(this);
-		// f_rawImportItem.addActionListener(this);
-	}
-
-
-	private void f_initEditPanels()
-	{
-		// JPanel dirPanel = new FileListPanel(f_workingDir, FileListPanel.DIRS);
-		// JPanel filePanel = new FileListPanel(f_workingDir);
-		FileChooserPanel fileChooser = new FileChooserPanel(f_workingDir);
-		fileChooser.addListSelectionListener(this);
-
-		final int bits = 8;
-
-		CurvePanel curveR = new CurvePanel(R, bits);
-		CurvePanel curveG = new CurvePanel(G, bits);
-		CurvePanel curveB = new CurvePanel(B, bits);
-		// CurvePanel curveComp = new CurvePanel(ALL_MASK, bits);
-
-		curveR.addLUTChangeListener(this);
-		curveG.addLUTChangeListener(this);
-		curveB.addLUTChangeListener(this);
-		// curveComp.addLUTChangeListener(this);
-
-		JTabbedPane curveTabs = new JTabbedPane();
-		curveTabs.add("Red", curveR);
-		curveTabs.add("Green", curveG);
-		curveTabs.add("Blue", curveB);
-		// curveTabs.add("<All>", curveComp);
-
-		JPanel curvePanel = new EtchedTitledPanel("Curves");
-		curvePanel.add(curveTabs);
-
-		LevelSliderPanel levelR = new LevelSliderPanel(R, bits);
-		LevelSliderPanel levelG = new LevelSliderPanel(G, bits);
-		LevelSliderPanel levelB = new LevelSliderPanel(B, bits);
-		LevelSliderPanel levelH = new LevelSliderPanel(H, bits);
-
-		levelR.addLUTChangeListener(this);
-		levelG.addLUTChangeListener(this);
-		levelB.addLUTChangeListener(this);
-		levelH.addLUTChangeListener(this);
-
-		addBitDepthChangeListener(curveR);
-		addBitDepthChangeListener(curveG);
-		addBitDepthChangeListener(curveB);
-		// addBitDepthChangeListener(curveComp);
-		addBitDepthChangeListener(levelR);
-		addBitDepthChangeListener(levelG);
-		addBitDepthChangeListener(levelB);
-		addBitDepthChangeListener(levelH);
-
-		JPanel levelPanel = new EtchedTitledPanel("Linear Detector Bias");
-		levelPanel.setLayout(new GridLayout(1, 4));
-		levelPanel.add(levelR);
-		levelPanel.add(levelG);
-		levelPanel.add(levelB);
-		levelPanel.add(levelH);
-
-		GridBagLayout bag = new GridBagLayout();
-		GridBagConstraints gc = new GridBagConstraints();
-		JPanel editPanel = new JPanel();
+            String wsPath = wsPrefix + File.separator + wsName;
+            String monPath = monPrefix + File.separator + monName;
+
+            String wdPath = prefs.get("Directories", "Default Image Directory");
+
+            wsProfilePath = wsPath;
+            monProfilePath = monPath;
+
+            System.err.println("  Loading default working space [" + wsProfilePath + "]...");
+            System.err.println("  Loading default monitor profile [" + monProfilePath + "]...");
+
+            wsProfile = ICC_Profile.getInstance(wsProfilePath);
+            monProfile = ICC_Profile.getInstance(monProfilePath);
+
+            workingDir = new File(wdPath);
+
+            // cme.initDeviceLink(wsPath, monPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+
+    private void initMenus() {
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setMnemonic('f');
+        fileMenu.add(newItem);
+        fileMenu.add(openItem);
+        fileMenu.add(saveItem);
+        fileMenu.add(saveAsItem);
+        fileMenu.addSeparator();
+        fileMenu.add(quitItem);
+
+        newItem.addActionListener(this);
+        openItem.addActionListener(this);
+        saveItem.addActionListener(this);
+        saveAsItem.addActionListener(this);
+        quitItem.addActionListener(this);
+
+        newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
+        openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        quitItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
+
+        JMenu editMenu = new JMenu("Edit");
+        editMenu.setMnemonic('e');
+        editMenu.add(redoItem);
+        editMenu.add(undoItem);
+        editMenu.addSeparator();
+        editMenu.add(applyItem);
+
+        redoItem.addActionListener(this);
+        undoItem.addActionListener(this);
+        applyItem.addActionListener(this);
+
+        redoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK));
+        undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+        applyItem.setAccelerator(KeyStroke.getKeyStroke(' ')); // KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+
+        JMenu colorMenu = new JMenu("Color");
+        colorMenu.setMnemonic('c');
+        colorMenu.add(levelsItem);
+        colorMenu.add(curvesItem);
+        colorMenu.addSeparator();
+        colorMenu.add(monProfItem);
+        colorMenu.add(imageWSItem);
+
+        levelsItem.addActionListener(this);
+        curvesItem.addActionListener(this);
+        monProfItem.addActionListener(this);
+        imageWSItem.addActionListener(this);
+
+        levelsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
+        curvesItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
+
+        rawMenu.setEnabled(false);
+        rawMenu.setMnemonic('r');
+        rawMenu.add(biasItem);
+        rawMenu.add(interpItem);
+
+        biasItem.addActionListener(this);
+        interpItem.addActionListener(this);
+
+        biasItem.setAccelerator(KeyStroke.getKeyStroke('b')); // KeyEvent.VK_B, InputEvent.CTRL_MASK));
+        interpItem.setAccelerator(KeyStroke.getKeyStroke('i')); // KeyEvent.VK_I, InputEvent.CTRL_MASK));
+
+        JMenu spacerMenu = new JMenu();
+        spacerMenu.setEnabled(false);
+
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+        menuBar.add(colorMenu);
+        menuBar.add(spacerMenu);
+        menuBar.add(rawMenu);
+
+        setJMenuBar(menuBar);
+
+        // monGammaItem.addActionListener(this);
+        // rawMenu.add(rawExportItem);
+        // colorMenu.add(monGammaItem);
+        // monGammaItem.setAccelerator(KeyStroke.getKeyStroke('g')); // KeyEvent.VK_G, InputEvent.CTRL_MASK));
+        // undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+        // undoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.getKeyChar(KeyEvent.VK_ESCAPE))); // KeyEvent.VK_Z, InputEvent.CTRL_MASK));
+        // rawMenu.add(rawImportItem);
+        // rawExportItem.addActionListener(this);
+        // rawImportItem.addActionListener(this);
+    }
+
+
+    private void initEditPanels() {
+        // JPanel dirPanel = new FileListPanel(workingDir, FileListPanel.DIRS);
+        // JPanel filePanel = new FileListPanel(workingDir);
+        FileChooserPanel fileChooser = new FileChooserPanel(workingDir);
+        fileChooser.addListSelectionListener(this);
+
+        final int bits = 8;
+
+        CurvePanel curveR = new CurvePanel(R, bits);
+        CurvePanel curveG = new CurvePanel(G, bits);
+        CurvePanel curveB = new CurvePanel(B, bits);
+        // CurvePanel curveComp = new CurvePanel(ALL_MASK, bits);
+
+        curveR.addLUTChangeListener(this);
+        curveG.addLUTChangeListener(this);
+        curveB.addLUTChangeListener(this);
+        // curveComp.addLUTChangeListener(this);
+
+        JTabbedPane curveTabs = new JTabbedPane();
+        curveTabs.add("Red", curveR);
+        curveTabs.add("Green", curveG);
+        curveTabs.add("Blue", curveB);
+        // curveTabs.add("<All>", curveComp);
+
+        JPanel curvePanel = new EtchedTitledPanel("Curves");
+        curvePanel.add(curveTabs);
+
+        LevelSliderPanel levelR = new LevelSliderPanel(R, bits);
+        LevelSliderPanel levelG = new LevelSliderPanel(G, bits);
+        LevelSliderPanel levelB = new LevelSliderPanel(B, bits);
+        LevelSliderPanel levelH = new LevelSliderPanel(H, bits);
+
+        levelR.addLUTChangeListener(this);
+        levelG.addLUTChangeListener(this);
+        levelB.addLUTChangeListener(this);
+        levelH.addLUTChangeListener(this);
+
+        addBitDepthChangeListener(curveR);
+        addBitDepthChangeListener(curveG);
+        addBitDepthChangeListener(curveB);
+        // addBitDepthChangeListener(curveComp);
+        addBitDepthChangeListener(levelR);
+        addBitDepthChangeListener(levelG);
+        addBitDepthChangeListener(levelB);
+        addBitDepthChangeListener(levelH);
+
+        JPanel levelPanel = new EtchedTitledPanel("Linear Detector Bias");
+        levelPanel.setLayout(new GridLayout(1, 4));
+        levelPanel.add(levelR);
+        levelPanel.add(levelG);
+        levelPanel.add(levelB);
+        levelPanel.add(levelH);
+
+        GridBagLayout bag = new GridBagLayout();
+        GridBagConstraints gc = new GridBagConstraints();
+        JPanel editPanel = new JPanel();
 
 		/*
 		editPanel.setBorder(new EmptyBorder(10,10,10,10));
@@ -484,244 +502,295 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 		bag.setConstraints(curvePanel, gc);
 		*/
 
-		// editPanel.setLayout(new GridLayout(3,1));
-		editPanel.setLayout(new BoxLayout(editPanel, BoxLayout.Y_AXIS));
+        // editPanel.setLayout(new GridLayout(3,1));
+        editPanel.setLayout(new BoxLayout(editPanel, BoxLayout.Y_AXIS));
+
+        // editPanel.add(dirPanel);
+        // editPanel.add(filePanel);
+        // editPanel.add(new JPanel());
+        editPanel.add(fileChooser);
+        editPanel.add(curvePanel);
+        editPanel.add(levelPanel);
+
+        JPanel imagePanel = new JPanel();
+        imagePanel.setLayout(new GridLayout(1, 1));
+        imagePanel.setBackground(Color.white);
+        imagePanel.setPreferredSize(new Dimension(2000, 1000));
+
+        scroller = new JScrollPane(imagePanel);
+
+        JPanel content = new JPanel();
+        content.setLayout(new BorderLayout());
+        content.add(editPanel, BorderLayout.WEST);
+        content.add(scroller, BorderLayout.CENTER);
+
+        add(content);
+        // setContentPane(content);
+    }
+
 
-		// editPanel.add(dirPanel);
-		// editPanel.add(filePanel);
-		// editPanel.add(new JPanel());
-		editPanel.add(fileChooser);
-		editPanel.add(curvePanel);
-		editPanel.add(levelPanel);
+    private void apply() {
+        if (rrtemp != null) {
+            if (rrtemp == null) return;
+            push();
+            rr = rrtemp;
+            rrtemp = null;
+        }
+    }
 
-		JPanel imagePanel = new JPanel();
-		imagePanel.setLayout(new GridLayout(1,1));
-		imagePanel.setBackground(Color.white);
-		imagePanel.setPreferredSize(new Dimension(2000, 1000));
+    private void interpolate() {
+        if (rr == null) return;
+        try {
+            push();
+            rr = rr.createCopy();
+            rr.interpolate(ALL_MASK);
+            displayImage();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 
-		f_scroller = new JScrollPane(imagePanel);
 
-		JPanel content = new JPanel();
-		content.setLayout(new BorderLayout());
-		content.add(editPanel, BorderLayout.WEST);
-		content.add(f_scroller, BorderLayout.CENTER);
+    private void push() {
+        undoStack.push(rr);
+    }
 
-		add(content);
-		// setContentPane(content);
-	}
+    private void undo() {
+        if (undoStack.empty()) return;
+        redoStack.push(rr);
+        rr = undoStack.pop();
+        displayImage();
+    }
 
+    private void redo() {
+        if (redoStack.empty()) return;
+        undoStack.push(rr);
+        rr = redoStack.pop();
+        displayImage();
+    }
 
-	private void f_apply() { if ( f_rrtemp != null ) { if ( f_rrtemp == null ) return; f_push(); f_rr = f_rrtemp; f_rrtemp = null; } }
-	private void f_interpolate() { if ( f_rr == null ) return; try { f_push(); f_rr = f_rr.createCopy(); f_rr.interpolate(ALL_MASK); f_displayImage(); } catch ( Exception e ) { e.printStackTrace(); System.exit(1); } }
 
+    private void displayImage(RawRaster raster) {
+        // raster = colorConvert(raster);
 
-	private void f_push() { f_undoStack.push(f_rr); }
-	private void f_undo() { if ( f_undoStack.empty() ) return; f_redoStack.push(f_rr); f_rr = f_undoStack.pop(); f_displayImage(); }
-	private void f_redo() { if ( f_redoStack.empty() ) return; f_undoStack.push(f_rr); f_rr = f_redoStack.pop(); f_displayImage(); }
+        ColorPanel cp = new ColorPanel();
+        cp.addRawRasterSelectionListener(this);
+        cp.setRawRaster(raster);
 
+        // JScrollPanel scroller = new JScrollPane(cp);
+        // JViewport vp = scroller.getViewport();
 
-	private void f_displayImage ( RawRaster raster )
-	{
-		// raster = f_colorConvert(raster);
+        JViewport vp = scroller.getViewport();
 
-		ColorPanel cp = new ColorPanel();
-		cp.addRawRasterSelectionListener(this);
-		cp.setRawRaster(raster);
+        Point save = vp.getViewPosition();
+        vp.setView(cp);
+        vp.setViewPosition(save);
 
-		// JScrollPanel scroller = new JScrollPane(cp);
-		// JViewport vp = scroller.getViewport();
+        // scroller.repaint();
 
-		JViewport vp = f_scroller.getViewport();
+        frame.add(scroller);
+        try {
+            frame.setMaximum(true);
+        } catch (Exception e) {
+        }
+        frame.setVisible(true);
+    }
 
-		Point save = vp.getViewPosition();
-		vp.setView(cp);
-		vp.setViewPosition(save);
+    private void displayImage() {
+        displayImage(rr);
+    }
 
-		// f_scroller.repaint();
 
-		f_frame.add(f_scroller);
-		try { f_frame.setMaximum(true); } catch ( Exception e ) {}
-		f_frame.setVisible(true);
-	}
-	private void f_displayImage() { f_displayImage(f_rr); }
+    private void levelsDialog() {
+        System.out.println("  Adjusting levels...");
+    }
 
+    private void curvesDialog() {
+        System.out.println("  Adjusting curves...");
+    }
 
-	private void f_levelsDialog() { System.out.println("  Adjusting levels..."); }
-	private void f_curvesDialog() { System.out.println("  Adjusting curves..."); }
-	private void f_biasDialog() { System.out.println("  Adjusting levels..."); }
+    private void biasDialog() {
+        System.out.println("  Adjusting levels...");
+    }
 
 
-	private void f_monProfDialog()
-	{
-		JFileChooser dialog = new JFileChooser(".");
+    private void monProfDialog() {
+        JFileChooser dialog = new JFileChooser(".");
 
-		int status = dialog.showOpenDialog(this);
+        int status = dialog.showOpenDialog(this);
 
-		if ( status != JFileChooser.APPROVE_OPTION )
-			return;
+        if (status != JFileChooser.APPROVE_OPTION)
+            return;
 
-		final File file = dialog.getSelectedFile();
-		final String filename = file.getPath();
+        final File file = dialog.getSelectedFile();
+        final String filename = file.getPath();
 
-		System.err.println("Loading monitor profile " + filename + "...");
+        System.err.println("Loading monitor profile " + filename + "...");
 
-		f_monProfilePath = filename;
-	}
-	private void f_imageWorkingSpaceDialog()
-	{
-		JFileChooser dialog = new JFileChooser(".");
+        monProfilePath = filename;
+    }
 
-		int status = dialog.showOpenDialog(this);
+    private void imageWorkingSpaceDialog() {
+        JFileChooser dialog = new JFileChooser(".");
 
-		if ( status != JFileChooser.APPROVE_OPTION )
-			return;
+        int status = dialog.showOpenDialog(this);
 
-		final File file = dialog.getSelectedFile();
-		final String filename = file.getPath();
+        if (status != JFileChooser.APPROVE_OPTION)
+            return;
 
-		System.err.println("Loading image color space " + filename + "...");
+        final File file = dialog.getSelectedFile();
+        final String filename = file.getPath();
 
-		f_wsProfilePath = filename;
-	}
+        System.err.println("Loading image color space " + filename + "...");
 
+        wsProfilePath = filename;
+    }
 
-	private void f_new()
-	{
-		if ( f_srr == null )
-			return;
 
-		ICC_Profile profile = f_rr.getProfile();
+    private void f_new()
+    {
+        if (srr == null)
+            return;
 
-		f_rr = f_srr;
-		f_rr.setProfile(profile);
+        ICC_Profile profile = rr.getProfile();
 
-		f_rrtemp = null;
-		f_srr = null;
+        rr = srr;
+        rr.setProfile(profile);
 
-		f_undoStack.removeAllElements();
-		f_redoStack.removeAllElements();
+        rrtemp = null;
+        srr = null;
 
-		fireBitDepthChangeEvent(f_rr, f_rr.getBits());
+        undoStack.removeAllElements();
+        redoStack.removeAllElements();
 
-		f_displayImage();
-	}
-	private void f_openDialog()
-	{
-		if ( f_wsProfilePath == null )
-			f_imageWorkingSpaceDialog();
+        fireBitDepthChangeEvent(rr, rr.getBits());
 
-		JFileChooser dialog = new JFileChooser(".");
+        displayImage();
+    }
 
-		int status = dialog.showOpenDialog(this);
+    private void openDialog() {
+        if (wsProfilePath == null)
+            imageWorkingSpaceDialog();
 
-		if ( status != JFileChooser.APPROVE_OPTION )
-			return;
+        JFileChooser dialog = new JFileChooser(".");
 
-		File file = dialog.getSelectedFile();
-		final String filename = file.getPath() + ".cpf";
-		file = new File(filename);
+        int status = dialog.showOpenDialog(this);
 
-		System.err.println("Opening CPF " + file.getPath() + "...");
+        if (status != JFileChooser.APPROVE_OPTION)
+            return;
 
-		try
-		{
-			final long length = file.length();
-			byte[] array = new byte[(int)length];
+        File file = dialog.getSelectedFile();
+        final String filename = file.getPath() + ".cpf";
+        file = new File(filename);
 
-			System.err.println("  Size of CPF: " + length);
-			System.err.println("  Created large array for CPF processing: (" + (int)length + " bytes).");
+        System.err.println("Opening CPF " + file.getPath() + "...");
 
-			DataInputStream stream = new DataInputStream(new FileInputStream(file));
-			stream.readFully(array);
-			stream.close();
+        try {
+            final long length = file.length();
+            byte[] array = new byte[(int) length];
 
-			f_rr = ColorPPMFile.decode(array); // f_rr = ColorPPMFile.decode(new FileInputStream(filename));
-			f_rr.setProfile(f_wsProfile);
+            System.err.println("  Size of CPF: " + length);
+            System.err.println("  Created large array for CPF processing: (" + (int) length + " bytes).");
 
-			/*
-			 * CMS change.
-			 */
-			// f_rr = f_rr.get3ColorRGBRaster();
+            DataInputStream stream = new DataInputStream(new FileInputStream(file));
+            stream.readFully(array);
+            stream.close();
 
-			f_displayImage();
-		}
-		catch ( Exception e ) { e.printStackTrace(); f_shutdown(); }
-	}
+            rr = ColorPPMFile.decode(array); // rr = ColorPPMFile.decode(new FileInputStream(filename));
+            rr.setProfile(wsProfile);
 
+            /*
+             * CMS change.
+             */
+            // rr = rr.get3ColorRGBRaster();
 
-	private void f_rawExportDialog()
-	{
-		JFileChooser dialog = new JFileChooser(".");
+            displayImage();
+        } catch (Exception e) {
+            e.printStackTrace();
+            shutdown();
+        }
+    }
 
-		int status = dialog.showSaveDialog(this);
 
-		if ( status != JFileChooser.APPROVE_OPTION )
-			return;
+    private void rawExportDialog() {
+        JFileChooser dialog = new JFileChooser(".");
 
-		final File file = dialog.getSelectedFile();
-		final String filename = file.getPath() + ".cpf";
+        int status = dialog.showSaveDialog(this);
 
-		System.err.println("Opening " + filename + "...");
+        if (status != JFileChooser.APPROVE_OPTION)
+            return;
 
-		try
-		{
-			FileOutputStream stream = new FileOutputStream(new File(filename));
+        final File file = dialog.getSelectedFile();
+        final String filename = file.getPath() + ".cpf";
 
-			ColorPPMFile.encode(f_rr, stream);
-		}
-		catch ( Exception e ) { e.printStackTrace(); f_shutdown(); }
-	}
+        System.err.println("Opening " + filename + "...");
 
+        try {
+            FileOutputStream stream = new FileOutputStream(new File(filename));
 
-	private void f_saveDialog() { f_saveAsDialog(); }
-	private void f_saveAsDialog()
-	{
-		JFileChooser dialog = new JFileChooser(".");
+            ColorPPMFile.encode(rr, stream);
+        } catch (Exception e) {
+            e.printStackTrace();
+            shutdown();
+        }
+    }
 
-		int status = dialog.showSaveDialog(this);
 
-		if ( status != JFileChooser.APPROVE_OPTION )
-			return;
+    private void saveDialog() {
+        saveAsDialog();
+    }
 
-		final File file = dialog.getSelectedFile();
-		final String filename = file.getPath() + ".cpf";
+    private void saveAsDialog() {
+        JFileChooser dialog = new JFileChooser(".");
 
-		System.err.println("Saving " + filename + "...");
+        int status = dialog.showSaveDialog(this);
 
-		try
-		{
-			System.err.println("Saving as: raster: " + f_rr);
+        if (status != JFileChooser.APPROVE_OPTION)
+            return;
 
-			FileOutputStream stream = new FileOutputStream(new File(filename));
+        final File file = dialog.getSelectedFile();
+        final String filename = file.getPath() + ".cpf";
 
-			ColorPPMFile.encode(f_rr, stream);
-		}
-		catch ( Exception e ) { e.printStackTrace(); f_shutdown(); }
-	}
+        System.err.println("Saving " + filename + "...");
 
+        try {
+            System.err.println("Saving as: raster: " + rr);
 
-	private void f_shutdown() { /* if ( f_cme != null ) { try { f_cme.dispose(); } catch ( Exception e ) { e.printStackTrace(); } } */ dispose(); System.exit(0); }
+            FileOutputStream stream = new FileOutputStream(new File(filename));
 
+            ColorPPMFile.encode(rr, stream);
+        } catch (Exception e) {
+            e.printStackTrace();
+            shutdown();
+        }
+    }
 
-	/*
-	 * **************************************************
-	 *
-	 * MAIN
-	 *
-	 * **************************************************
-	 */
 
+    private void shutdown() { /* if ( cme != null ) { try { cme.dispose(); } catch ( Exception e ) { e.printStackTrace(); } } */
+        dispose();
+        System.exit(0);
+    }
 
-	public static void main ( String[] args )
-	{
-		Main app = new Main();
 
-		app.setSize(2048, 2048);
-		Methods.centerWindow(app);
+    /*
+     * **************************************************
+     *
+     * MAIN
+     *
+     * **************************************************
+     */
 
-		// app.pack();
-		app.setVisible(true);
-	}
+
+    public static void main(String[] args) {
+        Main app = new Main();
+
+        app.setSize(2048, 2048);
+        Methods.centerWindow(app);
+
+        // app.pack();
+        app.setVisible(true);
+    }
 
 
 		/*
@@ -743,10 +812,9 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 		*/
 
 
-	private RawRaster f_colorConvert ( RawRaster src )
-	{
-		// if ( f_cme == null )
-		// return src;
+    private RawRaster colorConvert(RawRaster src) {
+        // if ( cme == null )
+        // return src;
 
 		/*
 		try
@@ -765,7 +833,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 			DataBufferInt idb = new DataBufferInt(size);
 			int[] output = idb.getData();
 
-			f_cme.colorConvert(input, size, output);
+			cme.colorConvert(input, size, output);
 
 			SampleModel sm = DISPLAY_COLOR_MODEL.createCompatibleSampleModel(width, height);
 			return Raster.createWritableRaster(sm, idb, new Point(0,0));
@@ -773,6 +841,6 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 		catch ( Exception e ) { e.printStackTrace(); System.err.println(1); }
 		*/
 
-		return src;
-	}
+        return src;
+    }
 }
