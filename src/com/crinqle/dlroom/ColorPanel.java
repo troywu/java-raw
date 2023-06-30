@@ -276,6 +276,11 @@ public class ColorPanel
             com.crinqle.dlroom.codec.RawCodec codec = com.crinqle.dlroom.codec.RawCodec
                   .getInstance(new java.io.File(args[0]));
 
+            if ( null == codec ) {
+                System.err.println("Could not create codec; aborting.");
+                System.exit(1);
+            }
+
             CaptureData cd = codec.decode();
             RawRaster   rr = new RawRaster(cd);
 

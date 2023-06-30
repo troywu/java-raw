@@ -14,6 +14,8 @@ import com.crinqle.dlroom.*;
  */
 public abstract class RawCodec
 {
+    public static final boolean DEBUG = true;
+
     protected       Seekable  f_stream;
     protected final int       f_size;
     protected       ImageInfo f_info;
@@ -45,8 +47,8 @@ public abstract class RawCodec
         info.order = rif.order();
         final int hlen = rif.read4();
 
-        // System.out.println("order: " + info.order);
-        // System.out.println("hlen: " + hlen);
+        if ( DEBUG ) System.out.println("order: " + info.order);
+        if ( DEBUG ) System.out.println("hlen: " + hlen);
 
         byte[] headBytes = new byte[26];
 
@@ -54,11 +56,11 @@ public abstract class RawCodec
 
         final String head = new String(headBytes);
 
-        // System.out.print("head: ");
-        // for ( int i = 0; i < 8; ++i )
-        // System.out.print("[" + (char)headBytes[i] + "]");
-        // System.out.println();
-        // System.out.println("fsize: " + fsize);
+        if ( DEBUG ) System.out.print("head: ");
+        for ( int i = 0; i < 8; ++i )
+            if ( DEBUG ) System.out.print("[" + (char)headBytes[i] + "]");
+        if ( DEBUG ) System.out.println();
+        if ( DEBUG ) System.out.println("fsize: " + fsize);
 
         rif.seek(0);
 
@@ -72,7 +74,7 @@ public abstract class RawCodec
          */
         final int magic = rif.read4();
 
-        // System.out.println("magic: " + magic);
+        if ( DEBUG ) System.out.println("magic: " + magic);
 
         if ( info.order == 0x4949 || info.order == 0x4d4d )
         {
@@ -82,20 +84,20 @@ public abstract class RawCodec
             }
         }
 
-		/*
-		System.out.println("make: " + info.make);
-		System.out.println("model: " + info.model);
-		System.out.println("camera_red: " + info.cameraRed);
-		System.out.println("camera_blue: " + info.cameraBlue);
-		System.out.println("raw_width: " + info.rawWidth);
-		System.out.println("raw_height: " + info.rawHeight);
-		System.out.println("timestamp: " + info.timestamp);
-		*/
+        System.out.println("make: " + info.make);
+        System.out.println("model: " + info.model);
+        System.out.println("camera_red: " + info.cameraRed);
+        System.out.println("camera_blue: " + info.cameraBlue);
+        System.out.println("raw_width: " + info.rawWidth);
+        System.out.println("raw_height: " + info.rawHeight);
+        System.out.println("timestamp: " + info.timestamp);
 
         /*
          * Are we working with Canon files?
          */
         boolean isCanon = info.make.startsWith("Canon");
+
+        System.out.println("isCanon? " + isCanon);
 
         if ( info.model.equalsIgnoreCase("Canon EOS D30") )
             codecImpl = new CanonEOSD30(rif, fsize, info);
