@@ -1,5 +1,6 @@
 package com.crinqle.dlroom;
 
+
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -17,133 +18,144 @@ import javax.swing.event.ChangeListener;
 
 import com.crinqle.dlroom.event.BitDepthChangeListener;
 import com.crinqle.dlroom.event.LUTChangeListener;
+
 import static com.crinqle.dlroom.Const.*;
 
-public class LevelSliderPanel extends JPanel implements ChangeListener,
-		BitDepthChangeListener {
-	private final int f_chan;
 
-	private int f_bits;
-	private int f_max;
 
-	private JSlider f_sl;
-	private JTextField f_tf;
-	private JSpinner f_sp;
-	private SpinnerModel f_spm;
+public class LevelSliderPanel
+      extends JPanel
+      implements ChangeListener, BitDepthChangeListener
+{
+    private final int f_chan;
 
-	private LUT f_lut = null;
-	private Collection<LUTChangeListener> f_listeners = new LinkedList<LUTChangeListener>();
+    private int f_bits;
+    private int f_max;
 
-	public LevelSliderPanel(int channel, int bits) {
-		// super(CHANNEL_NAME[channel]);
-		// setBackground(Color.lightGray);
+    private JSlider      f_sl;
+    private JTextField   f_tf;
+    private JSpinner     f_sp;
+    private SpinnerModel f_spm;
 
-		f_chan = channel;
-		f_bits = bits;
-		f_max = 1 << f_bits;
+    private LUT                           f_lut       = null;
+    private Collection<LUTChangeListener> f_listeners = new LinkedList<LUTChangeListener>();
 
-		f_sl = new JSlider(JSlider.VERTICAL, -100, 100, 0);
-		f_sl.addChangeListener(this);
-		f_sl.setMinorTickSpacing(5);
-		f_sl.setMajorTickSpacing(50);
-		f_sl.setPaintTicks(true);
-		// f_sl.setPaintTrack(true);
-		// f_sl.setPaintLabels(true);
+    public LevelSliderPanel ( int channel, int bits )
+    {
+        // super(CHANNEL_NAME[channel]);
+        // setBackground(Color.lightGray);
 
-		JLabel label = new JLabel(CHANNEL_NICKNAME[channel]); // + " =");
-		label.setHorizontalAlignment(JTextField.RIGHT);
+        f_chan = channel;
+        f_bits = bits;
+        f_max  = 1 << f_bits;
 
-		f_tf = new JTextField("1.00");
-		f_tf.setHorizontalAlignment(JTextField.RIGHT);
+        f_sl = new JSlider(JSlider.VERTICAL, -100, 100, 0);
+        f_sl.addChangeListener(this);
+        f_sl.setMinorTickSpacing(5);
+        f_sl.setMajorTickSpacing(50);
+        f_sl.setPaintTicks(true);
+        // f_sl.setPaintTrack(true);
+        // f_sl.setPaintLabels(true);
 
-		// JPanel p = new JPanel();
-		// p.add(f_tf);
-		// p.add(label);
+        JLabel label = new JLabel(CHANNEL_NICKNAME[channel]); // + " =");
+        label.setHorizontalAlignment(JTextField.RIGHT);
 
-		// setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        f_tf = new JTextField("1.00");
+        f_tf.setHorizontalAlignment(JTextField.RIGHT);
 
-		GridBagLayout bag = new GridBagLayout();
-		GridBagConstraints gc = new GridBagConstraints();
-		JPanel sliders = new JPanel();
-		sliders.setLayout(bag);
+        // JPanel p = new JPanel();
+        // p.add(f_tf);
+        // p.add(label);
 
-		// gc.fill = GridBagConstraints.BOTH;
-		// bag.setConstraints(filler, gc);
-		// gc.gridy = 2;
+        // setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-		gc.fill = GridBagConstraints.VERTICAL;
-		gc.gridy = 0;
-		// gc.gridwidth = 2;
-		bag.setConstraints(f_sl, gc);
+        GridBagLayout      bag     = new GridBagLayout();
+        GridBagConstraints gc      = new GridBagConstraints();
+        JPanel             sliders = new JPanel();
+        sliders.setLayout(bag);
 
-		gc.fill = GridBagConstraints.NONE;
-		gc.gridwidth = 1;
-		gc.gridy = 1;
-		bag.setConstraints(label, gc);
+        // gc.fill = GridBagConstraints.BOTH;
+        // bag.setConstraints(filler, gc);
+        // gc.gridy = 2;
 
-		// gc.gridx = 1;
-		gc.gridy = 2;
-		bag.setConstraints(f_tf, gc);
+        gc.fill  = GridBagConstraints.VERTICAL;
+        gc.gridy = 0;
+        // gc.gridwidth = 2;
+        bag.setConstraints(f_sl, gc);
 
-		// add(p);
+        gc.fill      = GridBagConstraints.NONE;
+        gc.gridwidth = 1;
+        gc.gridy     = 1;
+        bag.setConstraints(label, gc);
 
-		// add(filler);
-		sliders.add(label);
-		sliders.add(f_sl);
-		sliders.add(f_tf);
+        // gc.gridx = 1;
+        gc.gridy = 2;
+        bag.setConstraints(f_tf, gc);
 
-		add(sliders);
-		setPreferredSize(new Dimension(20, 256));
+        // add(p);
 
-		// setBorder(new EmptyBorder(0,10,0,10));
-	}
+        // add(filler);
+        sliders.add(label);
+        sliders.add(f_sl);
+        sliders.add(f_tf);
 
-	public void addLUTChangeListener(LUTChangeListener l) {
-		f_listeners.add(l);
-	}
+        add(sliders);
+        setPreferredSize(new Dimension(20, 256));
 
-	protected void fireLUTChangeEvent() {
-		for (LUTChangeListener l : f_listeners)
-			l.applyLUT(this, f_lut);
-	}
+        // setBorder(new EmptyBorder(0,10,0,10));
+    }
 
-	public void updateBits(Object source, int bits) {
-		f_bits = bits;
-		f_max = 1 << f_bits;
-	}
+    public void addLUTChangeListener ( LUTChangeListener l )
+    {
+        f_listeners.add(l);
+    }
 
-	public void stateChanged(ChangeEvent evt) {
-		Object obj = evt.getSource();
+    protected void fireLUTChangeEvent ()
+    {
+        for ( LUTChangeListener l : f_listeners )
+            l.applyLUT(this, f_lut);
+    }
 
-		if (obj == f_sl) {
-			final float val = 1 + (float) f_sl.getValue() / 100;
-			String text = Float.toString(val);
+    public void updateBits ( Object source, int bits )
+    {
+        f_bits = bits;
+        f_max  = 1 << f_bits;
+    }
 
-			if (text.length() > 3)
-				text = text.substring(0, 4);
-			else if (text.length() < 4)
-				text = text + "0";
+    public void stateChanged ( ChangeEvent evt )
+    {
+        Object obj = evt.getSource();
 
-			f_tf.setText(text);
+        if ( obj == f_sl )
+        {
+            final float val  = 1 + (float)f_sl.getValue() / 100;
+            String      text = Float.toString(val);
 
-			/*
-			 * Calculate LUT...
-			 */
-			final float[] array = new float[f_max];
+            if ( text.length() > 3 )
+                text = text.substring(0, 4);
+            else if ( text.length() < 4 )
+                text = text + "0";
 
-			for (int i = 0; i < f_max; ++i)
-				array[i] = (i * (float) val);
+            f_tf.setText(text);
 
-			final float max = array[f_max - 1];
+            /*
+             * Calculate LUT...
+             */
+            final float[] array = new float[f_max];
 
-			f_lut = new LUT(f_chan, array, f_max - 1);
+            for ( int i = 0; i < f_max; ++i )
+                  array[i] = (i * (float)val);
 
-			// System.out.println("@@ LevelSiderPanel: Adjusting channel " +
-			// f_chan + " values...");
-			// System.out.println("                    Adjusting " +
-			// CHANNEL_NICKNAME[f_chan] + " values...");
+            final float max = array[f_max - 1];
 
-			fireLUTChangeEvent();
-		}
-	}
+            f_lut = new LUT(f_chan, array, f_max - 1);
+
+            // System.out.println("@@ LevelSiderPanel: Adjusting channel " +
+            // f_chan + " values...");
+            // System.out.println("                    Adjusting " +
+            // CHANNEL_NICKNAME[f_chan] + " values...");
+
+            fireLUTChangeEvent();
+        }
+    }
 }

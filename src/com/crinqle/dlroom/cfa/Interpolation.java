@@ -3,5 +3,5 @@ package com.crinqle.dlroom.cfa;
 
 public interface Interpolation
 {
-	void interpolate ( int mask );
+    void interpolate ( int mask );
 }

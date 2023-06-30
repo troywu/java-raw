@@ -1,5 +1,6 @@
 package com.crinqle.dlroom.test;
 
+
 import static com.crinqle.dlroom.Const.B;
 import static com.crinqle.dlroom.Const.G;
 import static com.crinqle.dlroom.Const.H;
@@ -17,238 +18,257 @@ import com.crinqle.dlroom.CaptureData;
 import com.crinqle.dlroom.Const;
 import com.crinqle.dlroom.RawRaster;
 
-class BayerUtils {
-	public final static double GAMMA = (1.0 / 1.8);
 
-	/**
-	 * @param area
-	 *            <b>Must</b> be a square!
-	 */
-	public static JPanel showColorFilterArea(int[][] area, int bits, int band) {
-		final int dim = area.length;
-		final int shift = bits - 8;
-		final int r = dim >> 1;
-		final int max = 1 << bits;
 
-		final int[][] ba = new int[2][2];
+class BayerUtils
+{
+    public final static double GAMMA = (1.0 / 1.8);
 
-		/*
-		 * Even! The corner is the same color as the band.
-		 */
-		if ((r % 2) == 1) {
-			switch (band) {
-			case G:
-				ba[0][0] = G;
-				ba[0][1] = R;
-				ba[1][0] = B;
-				ba[1][1] = H;
-				break;
+    /**
+     * @param area <b>Must</b> be a square!
+     */
+    public static JPanel showColorFilterArea ( int[][] area, int bits, int band )
+    {
+        final int dim   = area.length;
+        final int shift = bits - 8;
+        final int r     = dim >> 1;
+        final int max   = 1 << bits;
 
-			case H:
-				ba[0][0] = H;
-				ba[0][1] = B;
-				ba[1][0] = R;
-				ba[1][1] = G;
-				break;
+        final int[][] ba = new int[2][2];
 
-			case B:
-				ba[0][0] = B;
-				ba[0][1] = H;
-				ba[1][0] = G;
-				ba[1][1] = R;
-				break;
+        /*
+         * Even! The corner is the same color as the band.
+         */
+        if ( (r % 2) == 1 )
+        {
+            switch ( band )
+            {
+                case G:
+                    ba[0][0] = G;
+                    ba[0][1] = R;
+                    ba[1][0] = B;
+                    ba[1][1] = H;
+                    break;
 
-			case R:
-				ba[0][0] = R;
-				ba[0][1] = G;
-				ba[1][0] = H;
-				ba[1][1] = B;
-				break;
-			}
-		}
-		/*
-		 * Odd! The corner is not the band.
-		 */
-		else {
-			switch (band) {
-			case G:
-				ba[0][0] = H;
-				ba[0][1] = B;
-				ba[1][0] = R;
-				ba[1][1] = G;
-				break;
+                case H:
+                    ba[0][0] = H;
+                    ba[0][1] = B;
+                    ba[1][0] = R;
+                    ba[1][1] = G;
+                    break;
 
-			case H:
-				ba[0][0] = G;
-				ba[0][1] = R;
-				ba[1][0] = B;
-				ba[1][1] = H;
-				break;
+                case B:
+                    ba[0][0] = B;
+                    ba[0][1] = H;
+                    ba[1][0] = G;
+                    ba[1][1] = R;
+                    break;
 
-			case B:
-				ba[0][0] = R;
-				ba[0][1] = G;
-				ba[1][0] = H;
-				ba[1][1] = B;
-				break;
+                case R:
+                    ba[0][0] = R;
+                    ba[0][1] = G;
+                    ba[1][0] = H;
+                    ba[1][1] = B;
+                    break;
+            }
+        }
+        /*
+         * Odd! The corner is not the band.
+         */
+        else
+        {
+            switch ( band )
+            {
+                case G:
+                    ba[0][0] = H;
+                    ba[0][1] = B;
+                    ba[1][0] = R;
+                    ba[1][1] = G;
+                    break;
 
-			case R:
-				ba[0][0] = B;
-				ba[0][1] = H;
-				ba[1][0] = G;
-				ba[1][1] = R;
-				break;
-			}
-		}
+                case H:
+                    ba[0][0] = G;
+                    ba[0][1] = R;
+                    ba[1][0] = B;
+                    ba[1][1] = H;
+                    break;
 
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(dim, dim));
-		Color c = null;
+                case B:
+                    ba[0][0] = R;
+                    ba[0][1] = G;
+                    ba[1][0] = H;
+                    ba[1][1] = B;
+                    break;
 
-		for (int y = 0; y < dim; ++y) {
-			// System.err.println("  ==> ");
+                case R:
+                    ba[0][0] = B;
+                    ba[0][1] = H;
+                    ba[1][0] = G;
+                    ba[1][1] = R;
+                    break;
+            }
+        }
 
-			for (int x = 0; x < dim; ++x) {
-				int value = area[y][x];
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(dim, dim));
+        Color c = null;
 
-				// System.err.print("\t" + value);
+        for ( int y = 0; y < dim; ++y )
+        {
+            // System.err.println("  ==> ");
 
-				double f = value / (double) max;
+            for ( int x = 0; x < dim; ++x )
+            {
+                int value = area[y][x];
 
-				// System.err.print("\t" + f + "(" + max + ")");
+                // System.err.print("\t" + value);
 
-				f = Math.pow(f, GAMMA);
+                double f = value / (double)max;
 
-				value = (int) (f * 255);
+                // System.err.print("\t" + f + "(" + max + ")");
 
-				switch (ba[y % 2][x % 2]) {
-				case G:
-				case H:
-					c = new Color(0, value, 0);
-					break;
+                f = Math.pow(f, GAMMA);
 
-				case R:
-					c = new Color(value, 0, 0);
-					break;
+                value = (int)(f * 255);
 
-				case B:
-					c = new Color(0, 0, value);
-					break;
+                switch ( ba[y % 2][x % 2] )
+                {
+                    case G:
+                    case H:
+                        c = new Color(0, value, 0);
+                        break;
 
-				default:
-					throw new RuntimeException(
-							"What the hell band is this?  Use the constants, asshole.");
-				}
+                    case R:
+                        c = new Color(value, 0, 0);
+                        break;
 
-				panel.add(makePanel(c));
-			}
+                    case B:
+                        c = new Color(0, 0, value);
+                        break;
 
-			// System.err.println("\n");
-		}
+                    default:
+                        throw new RuntimeException(
+                              "What the hell band is this?  Use the constants, asshole.");
+                }
 
-		return panel;
-	}
+                panel.add(makePanel(c));
+            }
 
-	/**
-	 * @param area
-	 *            <b>Must</b> be a square!
-	 */
-	public static JPanel showRawFilterArea(int[][] area, int bits, int band) {
-		final int dim = area.length;
-		final int shift = bits - 8;
-		final int r = dim >> 1;
-		final int max = 1 << bits;
+            // System.err.println("\n");
+        }
 
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(dim, dim));
-		Color c = null;
+        return panel;
+    }
 
-		for (int y = 0; y < dim; ++y) {
-			// System.err.print("  ==> ");
+    /**
+     * @param area <b>Must</b> be a square!
+     */
+    public static JPanel showRawFilterArea ( int[][] area, int bits, int band )
+    {
+        final int dim   = area.length;
+        final int shift = bits - 8;
+        final int r     = dim >> 1;
+        final int max   = 1 << bits;
 
-			for (int x = 0; x < dim; ++x) {
-				int value = area[y][x];
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(dim, dim));
+        Color c = null;
 
-				// System.err.print("\t" + value);
+        for ( int y = 0; y < dim; ++y )
+        {
+            // System.err.print("  ==> ");
 
-				double f = value / (double) max;
+            for ( int x = 0; x < dim; ++x )
+            {
+                int value = area[y][x];
 
-				// System.err.print("\t" + f);
+                // System.err.print("\t" + value);
 
-				f = Math.pow(f, GAMMA);
+                double f = value / (double)max;
 
-				value = (int) (f * 255);
+                // System.err.print("\t" + f);
 
-				panel.add(makePanel(new Color(value, value, value)));
-			}
+                f = Math.pow(f, GAMMA);
 
-			// System.err.println("\n");
-		}
+                value = (int)(f * 255);
 
-		return panel;
-	}
+                panel.add(makePanel(new Color(value, value, value)));
+            }
 
-	private static JPanel makePanel(Color color) {
-		JPanel p = new JPanel();
-		final int size = 4;
+            // System.err.println("\n");
+        }
 
-		p.setBackground(color);
+        return panel;
+    }
 
-		p.setMaximumSize(new Dimension(size, size));
-		p.setMinimumSize(new Dimension(size, size));
-		p.setPreferredSize(new Dimension(size, size));
+    private static JPanel makePanel ( Color color )
+    {
+        JPanel    p    = new JPanel();
+        final int size = 4;
 
-		return p;
-	}
+        p.setBackground(color);
 
-	public static void main(String[] args) {
-		if (args.length < 2) {
-			System.err
-					.println("Usage: java dlroom.BayerUtils <raw filename> <radius>");
-			System.exit(1);
-		}
+        p.setMaximumSize(new Dimension(size, size));
+        p.setMinimumSize(new Dimension(size, size));
+        p.setPreferredSize(new Dimension(size, size));
 
-		try {
-			com.crinqle.dlroom.codec.RawCodec codec = com.crinqle.dlroom.codec.RawCodec
-					.getInstance(new java.io.File(args[0]));
+        return p;
+    }
 
-			final int radius = Integer.parseInt(args[1]);
-			final int diameter = radius * 2 + 1;
+    public static void main ( String[] args )
+    {
+        if ( args.length < 2 )
+        {
+            System.err
+                  .println("Usage: java dlroom.BayerUtils <raw filename> <radius>");
+            System.exit(1);
+        }
 
-			CaptureData cd = codec.decode();
+        try
+        {
+            com.crinqle.dlroom.codec.RawCodec codec = com.crinqle.dlroom.codec.RawCodec
+                  .getInstance(new java.io.File(args[0]));
 
-			RawRaster rr = new RawRaster(cd);
+            final int radius   = Integer.parseInt(args[1]);
+            final int diameter = radius * 2 + 1;
 
-			// AreaBandIterator abi = cd.areaBandIterator(CFA.R, radius);
-			AreaBandIterator[] abis = cd.areaBandIterators(radius);
-			AreaBandIterator abi = abis[Const.R];
-			int[] array = null;
+            CaptureData cd = codec.decode();
 
-			if (abi.next()) {
-				array = abi.getArea();
-			}
+            RawRaster rr = new RawRaster(cd);
 
-			/*
-			 * for ( int band = 0; band < 3; ++band ) { for ( int y = 0; y <
-			 * 2*radius+1; ++y ) { System.err.print("  band " + band + " --> ");
-			 * 
-			 * for ( int x = 0; x < 2*radius+1; ++x ) System.err.print("\t" +
-			 * rr.sample(x, y, band));
-			 * 
-			 * System.err.println("\n"); } System.err.println("\n"); }
-			 */
+            // AreaBandIterator abi = cd.areaBandIterator(CFA.R, radius);
+            AreaBandIterator[] abis  = cd.areaBandIterators(radius);
+            AreaBandIterator   abi   = abis[Const.R];
+            int[]              array = null;
 
-			JPanel grid = showColorFilterArea(array, 12, Const.R);
+            if ( abi.next() )
+            {
+                array = abi.getArea();
+            }
 
-			JFrame frame = new JFrame("BayerUtils Test Driver");
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setContentPane(grid);
+            /*
+             * for ( int band = 0; band < 3; ++band ) { for ( int y = 0; y <
+             * 2*radius+1; ++y ) { System.err.print("  band " + band + " --> ");
+             *
+             * for ( int x = 0; x < 2*radius+1; ++x ) System.err.print("\t" +
+             * rr.sample(x, y, band));
+             *
+             * System.err.println("\n"); } System.err.println("\n"); }
+             */
 
-			frame.pack();
-			frame.setVisible(true);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
+            JPanel grid = showColorFilterArea(array, 12, Const.R);
+
+            JFrame frame = new JFrame("BayerUtils Test Driver");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setContentPane(grid);
+
+            frame.pack();
+            frame.setVisible(true);
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 }

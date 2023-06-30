@@ -8,11 +8,11 @@ package com.crinqle.dlroom;
  */
 public interface BandIterator
 {
-	boolean next();
-	boolean prev();
-	int get();
-	int index();
-	int x();
-	int y();
-	void set ( int value );
+    boolean next ();
+    boolean prev ();
+    int get ();
+    int index ();
+    int x ();
+    int y ();
+    void set ( int value );
 }

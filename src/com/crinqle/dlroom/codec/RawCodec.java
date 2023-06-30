@@ -1,9 +1,12 @@
 package com.crinqle.dlroom.codec;
 
+
 import java.awt.color.*;
 import java.io.*;
 import java.util.*;
+
 import com.crinqle.dlroom.*;
+
 
 
 /**
@@ -11,73 +14,73 @@ import com.crinqle.dlroom.*;
  */
 public abstract class RawCodec
 {
-	protected Seekable f_stream;
-	protected final int f_size;
-	protected ImageInfo f_info;
+    protected       Seekable  f_stream;
+    protected final int       f_size;
+    protected       ImageInfo f_info;
 
-	private static int[] f_table = new int[4096];
-	private static int f_tableCount = 0;
-
-
-	public static int getTableCount() { return f_tableCount; }
-	public static int[] getTableArray() { return f_table; }
+    private static int[] f_table      = new int[4096];
+    private static int   f_tableCount = 0;
 
 
-	RawCodec ( Seekable stream, int size, ImageInfo info )
-	{
-		f_stream = stream;
-		f_size = size;
-		f_info = info;
-	}
+    public static int getTableCount () { return f_tableCount; }
+    public static int[] getTableArray () { return f_table; }
 
 
-	public static RawCodec getInstance ( File file ) throws Exception
-	{
-		final int fsize = (int)file.length();
-		RawImageFile rif = RawImageFile.getInstance(file);
+    RawCodec ( Seekable stream, int size, ImageInfo info )
+    {
+        f_stream = stream;
+        f_size   = size;
+        f_info   = info;
+    }
 
-		RawCodec codecImpl = null;
-		ImageInfo info = new ImageInfo();
 
-		info.order = rif.order();
-		final int hlen = rif.read4();
+    public static RawCodec getInstance ( File file ) throws Exception
+    {
+        final int    fsize = (int)file.length();
+        RawImageFile rif   = RawImageFile.getInstance(file);
 
-		// System.out.println("order: " + info.order);
-		// System.out.println("hlen: " + hlen);
+        RawCodec  codecImpl = null;
+        ImageInfo info      = new ImageInfo();
 
-		byte[] headBytes = new byte[26];
+        info.order = rif.order();
+        final int hlen = rif.read4();
 
-		rif.read(headBytes, 0, 26);
+        // System.out.println("order: " + info.order);
+        // System.out.println("hlen: " + hlen);
 
-		final String head = new String(headBytes);
+        byte[] headBytes = new byte[26];
 
-		// System.out.print("head: ");
-		// for ( int i = 0; i < 8; ++i )
-		// System.out.print("[" + (char)headBytes[i] + "]");
-		// System.out.println();
-		// System.out.println("fsize: " + fsize);
+        rif.read(headBytes, 0, 26);
 
-		rif.seek(0);
+        final String head = new String(headBytes);
 
-		/*
-		 * Since the Canon is identified from the order, we don't
-		 * need the file magic.
-		 *
-		 * However, since we'll eventually be supporting other
-		 * camera models, this is good to have.  Plus, we need the
-		 * file offset to be at the correct location!
-		 */
-		final int magic = rif.read4();
+        // System.out.print("head: ");
+        // for ( int i = 0; i < 8; ++i )
+        // System.out.print("[" + (char)headBytes[i] + "]");
+        // System.out.println();
+        // System.out.println("fsize: " + fsize);
 
-		// System.out.println("magic: " + magic);
+        rif.seek(0);
 
-		if ( info.order == 0x4949  ||  info.order == 0x4d4d )
-		{
-			if ( head.startsWith("HEAPCCDR") )
-			{
-				sf_parseCiff(rif, info, hlen, fsize - hlen);
-			}
-		}
+        /*
+         * Since the Canon is identified from the order, we don't
+         * need the file magic.
+         *
+         * However, since we'll eventually be supporting other
+         * camera models, this is good to have.  Plus, we need the
+         * file offset to be at the correct location!
+         */
+        final int magic = rif.read4();
+
+        // System.out.println("magic: " + magic);
+
+        if ( info.order == 0x4949 || info.order == 0x4d4d )
+        {
+            if ( head.startsWith("HEAPCCDR") )
+            {
+                sf_parseCiff(rif, info, hlen, fsize - hlen);
+            }
+        }
 
 		/*
 		System.out.println("make: " + info.make);
@@ -89,235 +92,235 @@ public abstract class RawCodec
 		System.out.println("timestamp: " + info.timestamp);
 		*/
 
-		/*
-		 * Are we working with Canon files?
-		 */
-		boolean isCanon = info.make.startsWith("Canon");
+        /*
+         * Are we working with Canon files?
+         */
+        boolean isCanon = info.make.startsWith("Canon");
 
-		if ( info.model.equalsIgnoreCase("Canon EOS D30") )
-			codecImpl = new CanonEOSD30(rif, fsize, info);
+        if ( info.model.equalsIgnoreCase("Canon EOS D30") )
+            codecImpl = new CanonEOSD30(rif, fsize, info);
 
-		return codecImpl;
-	}
+        return codecImpl;
+    }
 
 
-	public abstract CaptureData decode(); // ( String wsProfilePath );
+    public abstract CaptureData decode (); // ( String wsProfilePath );
 
 
-	private static void sf_parseCiff ( RawImageFile file, ImageInfo info, final int offset, final int length ) throws IOException
-	{
-		int wbi = 0;
+    private static void sf_parseCiff ( RawImageFile file, ImageInfo info, final int offset, final int length ) throws IOException
+    {
+        int wbi = 0;
 
-		/*
-		 * seek to: offset + (length - 4)
-		 * seek to: read4() + offset;
-		 * read2()
-		 */
-		file.seek(offset + (length - 4));
+        /*
+         * seek to: offset + (length - 4)
+         * seek to: read4() + offset;
+         * read2()
+         */
+        file.seek(offset + (length - 4));
 
-		final int tboff = file.read4() + offset;
+        final int tboff = file.read4() + offset;
 
-		System.err.println("tboff: " + tboff);
+        System.err.println("tboff: " + tboff);
 
-		file.seek(tboff);
+        file.seek(tboff);
 
-		final int nrecs = file.read2();
+        final int nrecs = file.read2();
 
-		System.err.println("nrecs: " + nrecs);
+        System.err.println("nrecs: " + nrecs);
 
-		for ( int i = 0; i < nrecs; ++i )
-		{
-			final int type = file.read2();
-			final int len = file.read4();
-			final int roff = file.read4();
-			final int aoff = offset + roff;
-			final int save = (int)file.getPosition();
+        for ( int i = 0; i < nrecs; ++i )
+        {
+            final int type = file.read2();
+            final int len  = file.read4();
+            final int roff = file.read4();
+            final int aoff = offset + roff;
+            final int save = (int)file.getPosition();
 
-			System.err.println();
-			System.err.println("-- Record " + i + " --");
-			System.err.println("len: " + len);
-			System.err.println("roff: " + roff);
-			System.err.println("aoff: " + aoff);
-			System.err.println("save: " + save);
+            System.err.println();
+            System.err.println("-- Record " + i + " --");
+            System.err.println("len: " + len);
+            System.err.println("roff: " + roff);
+            System.err.println("aoff: " + aoff);
+            System.err.println("save: " + save);
 
-			byte[] make = new byte[64];
-			byte[] model = new byte[64];
-			byte[] model2 = new byte[64];
+            byte[] make   = new byte[64];
+            byte[] model  = new byte[64];
+            byte[] model2 = new byte[64];
 
-			for ( int n = 0; n < 64; ++n )
-				make[i] = model[i] = model[2] = 0;
+            for ( int n = 0; n < 64; ++n )
+                  make[i] = model[i] = model[2] = 0;
 
-			switch ( type )
-			{
-			    case 0x080a:
-				    System.err.println("type: 0x080a (make & model) <==--");
+            switch ( type )
+            {
+                case 0x080a:
+                    System.err.println("type: 0x080a (make & model) <==--");
 
-				    file.seek(aoff);
+                    file.seek(aoff);
 
-				    file.readFully(make, 0, 64);
+                    file.readFully(make, 0, 64);
 
-				    int l = 0;
-				    while ( make[++l] != 0 )
-					    ;
+                    int l = 0;
+                    while ( make[++l] != 0 )
+                        ;
 
-				    info.make = new String(make, 0, l);
+                    info.make = new String(make, 0, l);
 
-				    file.seek(aoff + info.make.length() + 1);
+                    file.seek(aoff + info.make.length() + 1);
 
-				    file.readFully(model, 0, 64);
+                    file.readFully(model, 0, 64);
 
-				    l = 0;
-				    while ( model[++l] != 0 )
-					    ;
+                    l = 0;
+                    while ( model[++l] != 0 )
+                        ;
 
-				    info.model = new String(model, 0 , l).trim();
-				    break;
+                    info.model = new String(model, 0, l).trim();
+                    break;
 
-			    case 0x102a:
-				    System.err.println("type: 0x102a (wbi) <==--");
+                case 0x102a:
+                    System.err.println("type: 0x102a (wbi) <==--");
 
-				    file.seek(aoff + 14);
+                    file.seek(aoff + 14);
 
-				    wbi = file.read2();
-				    break;
+                    wbi = file.read2();
+                    break;
 
-			    case 0x102c:
-			    {
-				    System.err.println("type: 0x102c (G2 white balance) <==--");
+                case 0x102c:
+                {
+                    System.err.println("type: 0x102c (G2 white balance) <==--");
 
-				    file.seek(aoff + 100);
+                    file.seek(aoff + 100);
 
-				    final int a = file.read2();
-				    final int b = file.read2();
-				    final int c = file.read2();
-				    final int d = file.read2();
+                    final int a = file.read2();
+                    final int b = file.read2();
+                    final int c = file.read2();
+                    final int d = file.read2();
 
-				    System.err.println("a: " + a);
-				    System.err.println("b: " + b);
-				    System.err.println("c: " + c);
-				    System.err.println("d: " + d);
+                    System.err.println("a: " + a);
+                    System.err.println("b: " + b);
+                    System.err.println("c: " + c);
+                    System.err.println("d: " + d);
 
-				    if ( a == 0 )
-					    info.cameraRed = 0;
-				    else
-					    info.cameraRed = b / a;
+                    if ( a == 0 )
+                        info.cameraRed = 0;
+                    else
+                        info.cameraRed = b / a;
 
-				    if ( d == 0 )
-					    info.cameraBlue = 0;
-				    else
-					    info.cameraBlue = c / d;
+                    if ( d == 0 )
+                        info.cameraBlue = 0;
+                    else
+                        info.cameraBlue = c / d;
 
-				    System.err.println("(type 0x102c) wbi: [" + wbi + "] cameraRed: [" + info.cameraRed + "] cameraBlue: [" + info.cameraBlue + "]");
+                    System.err.println("(type 0x102c) wbi: [" + wbi + "] cameraRed: [" + info.cameraRed + "] cameraBlue: [" + info.cameraBlue + "]");
 
-				    break;
-			    }
+                    break;
+                }
 
-			    case 0x0032:
-				    System.err.println("type: 0x0032 (D30 white balance) <==--");
+                case 0x0032:
+                    System.err.println("type: 0x0032 (D30 white balance) <==--");
 
-				    if ( info.model.equals("Canon EOS D30") )
-				    {
-					    file.seek(aoff + 72);
-					    
-					    final int a = file.read2();
-					    final int b = file.read2();
-					    final int c = file.read2();
-					    final int d = file.read2();
+                    if ( info.model.equals("Canon EOS D30") )
+                    {
+                        file.seek(aoff + 72);
 
-					    System.err.println("type 0x0032: a: " + a);
-					    System.err.println("type 0x0032: b: " + b);
-					    System.err.println("type 0x0032: c: " + c);
-					    System.err.println("type 0x0032: d: " + d);
+                        final int a = file.read2();
+                        final int b = file.read2();
+                        final int c = file.read2();
+                        final int d = file.read2();
 
-					    info.cameraRed = b / a;
-					    info.cameraBlue = c / d;
+                        System.err.println("type 0x0032: a: " + a);
+                        System.err.println("type 0x0032: b: " + b);
+                        System.err.println("type 0x0032: c: " + c);
+                        System.err.println("type 0x0032: d: " + d);
 
-					    if ( wbi == 0 )
-						    info.cameraRed = info.cameraBlue = 0;
+                        info.cameraRed  = b / a;
+                        info.cameraBlue = c / d;
 
-					    System.err.println("(type 0x0032) wbi: [" + wbi + "] cameraRed: [" + info.cameraRed + "] cameraBlue: [" + info.cameraBlue + "]");
-				    }
-				    break;
+                        if ( wbi == 0 )
+                            info.cameraRed = info.cameraBlue = 0;
 
-			    case 0x10a9:
-				    System.err.println("type: 0x10a9 (D60 white balance) ( <==--");
+                        System.err.println("(type 0x0032) wbi: [" + wbi + "] cameraRed: [" + info.cameraRed + "] cameraBlue: [" + info.cameraBlue + "]");
+                    }
+                    break;
 
-				    file.seek(aoff + 2 + (wbi << 3));
+                case 0x10a9:
+                    System.err.println("type: 0x10a9 (D60 white balance) ( <==--");
 
-				    info.cameraRed = file.read2();
-				    info.cameraRed /= file.read2();
-				    info.cameraBlue = file.read2();
-				    info.cameraBlue = file.read2() / info.cameraBlue;
-				    break;
+                    file.seek(aoff + 2 + (wbi << 3));
 
-			    case 0x1031:
-				    System.err.println("type: 0x1031 (raw dimensions) <==--");
+                    info.cameraRed = file.read2();
+                    info.cameraRed /= file.read2();
+                    info.cameraBlue = file.read2();
+                    info.cameraBlue = file.read2() / info.cameraBlue;
+                    break;
 
-				    file.seek(aoff + 2);
+                case 0x1031:
+                    System.err.println("type: 0x1031 (raw dimensions) <==--");
 
-				    info.rawWidth = file.read2();
-				    info.rawHeight = file.read2();
-				    break;
+                    file.seek(aoff + 2);
 
-			    case 0x180e:
-				    System.err.println("type: 0x180e (timestamp) <==--");
+                    info.rawWidth = file.read2();
+                    info.rawHeight = file.read2();
+                    break;
 
-				    file.seek(aoff);
+                case 0x180e:
+                    System.err.println("type: 0x180e (timestamp) <==--");
 
-				    info.timestamp = file.read4();
-				    break;
+                    file.seek(aoff);
 
-			    case 0x1835:
-				    System.err.println("type: 0x1835 (decoder table) <==--");
+                    info.timestamp = file.read4();
+                    break;
 
-				    /*
-				     * How many table entries to create?
-				     */
-				    file.seek(aoff);
+                case 0x1835:
+                    System.err.println("type: 0x1835 (decoder table) <==--");
 
-				    info.table = file.read4();
+                    /*
+                     * How many table entries to create?
+                     */
+                    file.seek(aoff);
 
-				    System.err.println("@@ t: " + info.table);
+                    info.table = file.read4();
 
-				    break;
-			}
+                    System.err.println("@@ t: " + info.table);
 
-			if ( type >> 8 == 0x28  ||  type >> 8 == 0x30 )
-			{
-				System.err.println("type: *RECURSION* <==--");
-				sf_parseCiff(file, info, aoff, len);
-			}
+                    break;
+            }
 
-			// System.err.println("-- parsing CIFF almost done...about to seek to SAVE...");
+            if ( type >> 8 == 0x28 || type >> 8 == 0x30 )
+            {
+                System.err.println("type: *RECURSION* <==--");
+                sf_parseCiff(file, info, aoff, len);
+            }
 
-			file.seek(save);
-		}
-	}
+            // System.err.println("-- parsing CIFF almost done...about to seek to SAVE...");
 
+            file.seek(save);
+        }
+    }
 
-	/*
-	 * Test driver.
-	 */
-	public static void main ( String[] args )
-	{
-		try
-		{
-			RawCodec codec = RawCodec.getInstance(new File(args[0]));
 
-			final Calendar start = Calendar.getInstance();
+    /*
+     * Test driver.
+     */
+    public static void main ( String[] args )
+    {
+        try
+        {
+            RawCodec codec = RawCodec.getInstance(new File(args[0]));
 
-			CaptureData data = codec.decode(); // ICC_Profile.getInstance(ColorSpace.CS_sRGB));
+            final Calendar start = Calendar.getInstance();
 
-			final Calendar stop = Calendar.getInstance();
+            CaptureData data = codec.decode(); // ICC_Profile.getInstance(ColorSpace.CS_sRGB));
 
-			System.err.println("  ==> Total decompression: " +
-					   ((stop.getTimeInMillis() - start.getTimeInMillis())/1000.0) +
-					   " sec");
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
+            final Calendar stop = Calendar.getInstance();
+
+            System.err.println("  ==> Total decompression: " +
+                               ((stop.getTimeInMillis() - start.getTimeInMillis()) / 1000.0) +
+                               " sec");
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 }

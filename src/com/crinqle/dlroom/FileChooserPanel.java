@@ -1,5 +1,6 @@
 package com.crinqle.dlroom;
 
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -23,126 +24,127 @@ import javax.swing.event.ListSelectionListener;
 
 import com.crinqle.dlroom.util.EtchedTitledPanel;
 
-public class FileChooserPanel extends EtchedTitledPanel implements
-		ListSelectionListener, MouseListener {
-	private File f_dir;
-	private FileListPanel f_dp;
-	private FileListPanel f_fp;
-	private JLabel f_dirLabel;
 
-	public FileChooserPanel(File dir) {
-		super("Files");
 
-		addMouseListener(this);
+public class FileChooserPanel
+      extends EtchedTitledPanel
+      implements ListSelectionListener, MouseListener
+{
+    private File          f_dir;
+    private FileListPanel f_dp;
+    private FileListPanel f_fp;
+    private JLabel        f_dirLabel;
 
-		f_dir = dir;
+    public FileChooserPanel ( File dir )
+    {
+        super("Files");
 
-		f_dp = new FileListPanel(f_dir, FileListPanel.DIRS);
-		f_dp.setSelectedIndex(0);
-		f_dp.addListSelectionListener(this);
+        addMouseListener(this);
 
-		dir = (File) f_dp.getSelectedValue();
+        f_dir = dir;
 
-		f_fp = new FileListPanel(dir);
-		f_dirLabel = new JLabel(dir.toString());
-		Border b1 = new EmptyBorder(15, 15, 15, 15);
-		Border b2 = new BevelBorder(BevelBorder.LOWERED);
-		f_dirLabel.setBorder(new CompoundBorder(b1, b2));
-		f_dirLabel.setHorizontalAlignment(JLabel.CENTER);
+        f_dp = new FileListPanel(f_dir, FileListPanel.DIRS);
+        f_dp.setSelectedIndex(0);
+        f_dp.addListSelectionListener(this);
 
-		JScrollPane dpScroller = new JScrollPane(f_dp);
-		JScrollPane fpScroller = new JScrollPane(f_fp);
+        dir = (File)f_dp.getSelectedValue();
 
-		dpScroller
-				.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		dpScroller
-				.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        f_fp       = new FileListPanel(dir);
+        f_dirLabel = new JLabel(dir.toString());
+        Border b1 = new EmptyBorder(15, 15, 15, 15);
+        Border b2 = new BevelBorder(BevelBorder.LOWERED);
+        f_dirLabel.setBorder(new CompoundBorder(b1, b2));
+        f_dirLabel.setHorizontalAlignment(JLabel.CENTER);
 
-		fpScroller
-				.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		fpScroller
-				.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        JScrollPane dpScroller = new JScrollPane(f_dp);
+        JScrollPane fpScroller = new JScrollPane(f_fp);
 
-		JLabel dpLabel = new JLabel("Directories");
-		JLabel fpLabel = new JLabel("Files");
+        dpScroller
+              .setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        dpScroller
+              .setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-		dpLabel.setBackground(Color.gray);
-		fpLabel.setBackground(Color.gray);
+        fpScroller
+              .setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        fpScroller
+              .setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-		dpLabel.setHorizontalAlignment(JLabel.CENTER);
-		fpLabel.setHorizontalAlignment(JLabel.CENTER);
+        JLabel dpLabel = new JLabel("Directories");
+        JLabel fpLabel = new JLabel("Files");
 
-		JPanel dpPanel = new JPanel();
-		dpPanel.setLayout(new BoxLayout(dpPanel, BoxLayout.Y_AXIS));
-		dpPanel.add(dpLabel);
-		dpPanel.add(dpScroller);
+        dpLabel.setBackground(Color.gray);
+        fpLabel.setBackground(Color.gray);
 
-		JPanel fpPanel = new JPanel();
-		fpPanel.setLayout(new BoxLayout(fpPanel, BoxLayout.Y_AXIS));
-		fpPanel.add(fpLabel);
-		fpPanel.add(fpScroller);
+        dpLabel.setHorizontalAlignment(JLabel.CENTER);
+        fpLabel.setHorizontalAlignment(JLabel.CENTER);
 
-		JPanel bothPanel = new JPanel();
-		bothPanel.setLayout(new GridLayout(1, 2));
-		bothPanel.add(dpPanel);
-		bothPanel.add(fpPanel);
+        JPanel dpPanel = new JPanel();
+        dpPanel.setLayout(new BoxLayout(dpPanel, BoxLayout.Y_AXIS));
+        dpPanel.add(dpLabel);
+        dpPanel.add(dpScroller);
 
-		setLayout(new BorderLayout());
-		add(f_dirLabel, BorderLayout.NORTH);
-		add(bothPanel);
+        JPanel fpPanel = new JPanel();
+        fpPanel.setLayout(new BoxLayout(fpPanel, BoxLayout.Y_AXIS));
+        fpPanel.add(fpLabel);
+        fpPanel.add(fpScroller);
 
-		setMinimumSize(new Dimension(100, 400));
-	}
+        JPanel bothPanel = new JPanel();
+        bothPanel.setLayout(new GridLayout(1, 2));
+        bothPanel.add(dpPanel);
+        bothPanel.add(fpPanel);
 
-	public void addListSelectionListener(ListSelectionListener l) {
-		f_fp.addListSelectionListener(l);
-	}
+        setLayout(new BorderLayout());
+        add(f_dirLabel, BorderLayout.NORTH);
+        add(bothPanel);
 
-	public void mouseClicked(MouseEvent evt) {
-		if (evt.getButton() == MouseEvent.BUTTON3)
-			updateFiles(f_dir.getParentFile());
-	}
+        setMinimumSize(new Dimension(100, 400));
+    }
 
-	public void mouseEntered(MouseEvent evt) {
-	}
+    public void addListSelectionListener ( ListSelectionListener l )
+    {
+        f_fp.addListSelectionListener(l);
+    }
 
-	public void mouseExited(MouseEvent evt) {
-	}
+    public void mouseClicked ( MouseEvent evt )
+    {
+        if ( evt.getButton() == MouseEvent.BUTTON3 )
+            updateFiles(f_dir.getParentFile());
+    }
 
-	public void mousePressed(MouseEvent evt) {
-	}
+    public void mouseEntered ( MouseEvent evt ) {}
+    public void mouseExited ( MouseEvent evt ) {}
+    public void mousePressed ( MouseEvent evt ) {}
+    public void mouseReleased ( MouseEvent evt ) {}
+    public void mouseDragged ( MouseEvent evt ) {}
+    public void mouseMoved ( MouseEvent evt ) {}
 
-	public void mouseReleased(MouseEvent evt) {
-	}
+    public void valueChanged ( ListSelectionEvent evt )
+    {
+        Object src = evt.getSource();
 
-	public void mouseDragged(MouseEvent evt) {
-	}
+        if ( !evt.getValueIsAdjusting() )
+        {
+            if ( src instanceof JList )
+            {
+                JList list = (JList)src;
 
-	public void mouseMoved(MouseEvent evt) {
-	}
+                Object obj = list.getSelectedValue();
 
-	public void valueChanged(ListSelectionEvent evt) {
-		Object src = evt.getSource();
+                if ( obj != null )
+                    if ( obj instanceof File )
+                        updateFiles((File)obj);
+            }
+        }
+    }
 
-		if (!evt.getValueIsAdjusting()) {
-			if (src instanceof JList) {
-				JList list = (JList) src;
-
-				Object obj = list.getSelectedValue();
-
-				if (obj != null)
-					if (obj instanceof File)
-						updateFiles((File) obj);
-			}
-		}
-	}
-
-	protected void updateFiles(File file) {
-		if (file.isDirectory()) {
-			f_dir = file;
-			f_dirLabel.setText(file.toString());
-			f_dp.updateFiles(file);
-			f_fp.updateFiles(file);
-		}
-	}
+    protected void updateFiles ( File file )
+    {
+        if ( file.isDirectory() )
+        {
+            f_dir = file;
+            f_dirLabel.setText(file.toString());
+            f_dp.updateFiles(file);
+            f_fp.updateFiles(file);
+        }
+    }
 }

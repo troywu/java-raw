@@ -9,6 +9,6 @@ package com.crinqle.dlroom;
  */
 public interface AreaBandIterator extends BandIterator
 {
-	int[] getArea();
-	void set ( int band, int val );
+    int[] getArea ();
+    void set ( int band, int val );
 }

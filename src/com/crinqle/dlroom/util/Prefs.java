@@ -41,7 +41,7 @@ public class Prefs
     private Hashtable<String, String>                    f_def  = new Hashtable<String, String>();
 
 
-    public static Prefs loadFromFile( File file ) throws IOException
+    public static Prefs loadFromFile ( File file ) throws IOException
     {
         try
         {
@@ -102,19 +102,19 @@ public class Prefs
     }
 
 
-    public String get( String prop )
+    public String get ( String prop )
     {
         return (String)f_def.get(prop);
     }
 
 
-    public void put( String prop, String value )
+    public void put ( String prop, String value )
     {
         f_def.put(prop, value);
     }
 
 
-    public String get( String section, String prop )
+    public String get ( String section, String prop )
     {
         Hashtable<String, String> h = f_hash.get(section);
 
@@ -125,7 +125,7 @@ public class Prefs
     }
 
 
-    public void put( String section, String prop, String value )
+    public void put ( String section, String prop, String value )
     {
         Hashtable<String, String> h = f_hash.get(section);
 
@@ -141,7 +141,7 @@ public class Prefs
      * main driver.
      *
      */
-    public static void main( String[] args ) throws IOException
+    public static void main ( String[] args ) throws IOException
     {
         final int argc = args.length;
 

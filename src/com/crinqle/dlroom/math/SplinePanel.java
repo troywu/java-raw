@@ -32,7 +32,7 @@ public class SplinePanel extends JPanel implements MouseListener,
     private LUT                           lut;
     private Collection<LUTChangeListener> listeners = new LinkedList<LUTChangeListener>();
 
-    public SplinePanel( int channel, int bits )
+    public SplinePanel ( int channel, int bits )
     {
         c = new NatCubic(channel, SLIDER_SIZE, bits);
 
@@ -48,24 +48,24 @@ public class SplinePanel extends JPanel implements MouseListener,
         setBackground(Color.white);
     }
 
-    public void addLUTChangeListener( LUTChangeListener l )
+    public void addLUTChangeListener ( LUTChangeListener l )
     {
         listeners.add(l);
     }
 
-    protected void fireLUTChangeEvent()
+    protected void fireLUTChangeEvent ()
     {
         for ( LUTChangeListener l : listeners )
             l.applyLUT(this, lut);
     } // Iterator iter = listeners.iterator(); while ( iter.hasNext() )
     // ((LUTChangeListener)iter.next()).applyLUT(this, lut); }
 
-    public LUT getLUT()
+    public LUT getLUT ()
     {
         return lut;
     }
 
-    public void addPoint( int x, int y )
+    public void addPoint ( int x, int y )
     {
         if ( x < 0 || y < 0 || x >= SLIDER_SIZE || y >= SLIDER_SIZE )
             return;
@@ -75,24 +75,24 @@ public class SplinePanel extends JPanel implements MouseListener,
         refresh();
     }
 
-    public void updateBits( Object source, int bits )
+    public void updateBits ( Object source, int bits )
     {
         c.updateBits(source, bits);
     }
 
-    public void mouseClicked( MouseEvent evt )
+    public void mouseClicked ( MouseEvent evt )
     {
     }
 
-    public void mouseEntered( MouseEvent evt )
+    public void mouseEntered ( MouseEvent evt )
     {
     }
 
-    public void mouseExited( MouseEvent evt )
+    public void mouseExited ( MouseEvent evt )
     {
     }
 
-    public void mousePressed( MouseEvent evt )
+    public void mousePressed ( MouseEvent evt )
     {
         final int x = evt.getX();
         final int y = evt.getY();
@@ -108,7 +108,7 @@ public class SplinePanel extends JPanel implements MouseListener,
         refresh();
     }
 
-    public void mouseReleased( MouseEvent evt )
+    public void mouseReleased ( MouseEvent evt )
     {
         lut = c.getLUT();
 
@@ -118,7 +118,7 @@ public class SplinePanel extends JPanel implements MouseListener,
         fireLUTChangeEvent();
     }
 
-    public void mouseDragged( MouseEvent evt )
+    public void mouseDragged ( MouseEvent evt )
     {
         int x = evt.getX();
         int y = evt.getY();
@@ -137,18 +137,18 @@ public class SplinePanel extends JPanel implements MouseListener,
         refresh();
     }
 
-    public void mouseMoved( MouseEvent evt )
+    public void mouseMoved ( MouseEvent evt )
     {
     }
 
-    public void paintComponent( Graphics g )
+    public void paintComponent ( Graphics g )
     {
         super.paintComponent(g);
 
         c.paint(g);
     }
 
-    private void refresh()
+    private void refresh ()
     {
         /*
          * Calculate the range....
@@ -156,7 +156,7 @@ public class SplinePanel extends JPanel implements MouseListener,
         repaint();
     }
 
-    public static void main( String[] args )
+    public static void main ( String[] args )
     {
         final int argc = args.length;
         int       bits = 8;
