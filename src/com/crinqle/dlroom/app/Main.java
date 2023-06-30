@@ -109,7 +109,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     // private JPanel levelPanel = null;
 
 
-    public Main()
+    public Main ()
     {
         super("Java Raw Decoder");
 
@@ -147,7 +147,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
      */
 
 
-    public void actionPerformed( ActionEvent evt )
+    public void actionPerformed ( ActionEvent evt )
     {
         Object source = evt.getSource();
 
@@ -192,7 +192,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    public void valueChanged( ListSelectionEvent evt )
+    public void valueChanged ( ListSelectionEvent evt )
     {
         Object src = evt.getSource();
 
@@ -219,7 +219,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void loadImage( File file )
+    private void loadImage ( File file )
     {
         try
         {
@@ -250,12 +250,12 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    public void addBitDepthChangeListener( BitDepthChangeListener l )
+    public void addBitDepthChangeListener ( BitDepthChangeListener l )
     {
         bdcls.add(l);
     }
 
-    public void fireBitDepthChangeEvent( Object source, int bits )
+    public void fireBitDepthChangeEvent ( Object source, int bits )
     {
         System.out.println("  bit depth change: " + bits);
         Iterator iter = bdcls.iterator();
@@ -263,7 +263,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    public void applyLUT( Object source, LUT lut )
+    public void applyLUT ( Object source, LUT lut )
     {
         if ( rr == null )
             return;
@@ -277,40 +277,40 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    public void subrasterSelected( Object source, RawRaster rr )
+    public void subrasterSelected ( Object source, RawRaster rr )
     {
         System.out.println("Main.subrasterSelected()");
         srr = rr;
     }
 
 
-    public void windowClosing( WindowEvent evt )
+    public void windowClosing ( WindowEvent evt )
     {
         shutdown();
     }
 
-    public void windowClosed( WindowEvent evt )
+    public void windowClosed ( WindowEvent evt )
     {
         shutdown();
     }
 
-    public void windowOpened( WindowEvent evt )
+    public void windowOpened ( WindowEvent evt )
     {
     }
 
-    public void windowIconified( WindowEvent evt )
+    public void windowIconified ( WindowEvent evt )
     {
     }
 
-    public void windowDeiconified( WindowEvent evt )
+    public void windowDeiconified ( WindowEvent evt )
     {
     }
 
-    public void windowActivated( WindowEvent evt )
+    public void windowActivated ( WindowEvent evt )
     {
     }
 
-    public void windowDeactivated( WindowEvent evt )
+    public void windowDeactivated ( WindowEvent evt )
     {
     }
 
@@ -324,9 +324,10 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
      */
 
 
-    private void loadPreferences()
+    private void loadPreferences ()
     {
-        String prefsPath = System.getProperty("user.home") + File.separator + prefsName;
+        String home      = System.getProperty("user.home");
+        String prefsPath = home + File.separator + prefsName;
 
         System.err.println("Loading application prefs from: " + prefsPath);
 
@@ -340,8 +341,8 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
             String wsName  = prefs.get("Color Spaces", "Default Working Space");
             String monName = prefs.get("Color Spaces", "Default Monitor Space");
 
-            String wsPath  = wsPrefix + File.separator + wsName;
-            String monPath = monPrefix + File.separator + monName;
+            String wsPath  = home + File.separator + wsPrefix + File.separator + wsName;
+            String monPath = home + File.separator + monPrefix + File.separator + monName;
 
             String wdPath = prefs.get("Directories", "Default Image Directory");
 
@@ -366,7 +367,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void initMenus()
+    private void initMenus ()
     {
         JMenu fileMenu = new JMenu("File");
         fileMenu.setMnemonic('f');
@@ -454,7 +455,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void initEditPanels()
+    private void initEditPanels ()
     {
         // JPanel dirPanel = new FileListPanel(workingDir, FileListPanel.DIRS);
         // JPanel filePanel = new FileListPanel(workingDir);
@@ -563,7 +564,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void apply()
+    private void apply ()
     {
         if ( rrtemp != null )
         {
@@ -574,7 +575,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         }
     }
 
-    private void interpolate()
+    private void interpolate ()
     {
         if ( rr == null ) return;
         try
@@ -592,12 +593,12 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void push()
+    private void push ()
     {
         undoStack.push(rr);
     }
 
-    private void undo()
+    private void undo ()
     {
         if ( undoStack.empty() ) return;
         redoStack.push(rr);
@@ -605,7 +606,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         displayImage();
     }
 
-    private void redo()
+    private void redo ()
     {
         if ( redoStack.empty() ) return;
         undoStack.push(rr);
@@ -614,7 +615,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void displayImage( RawRaster raster )
+    private void displayImage ( RawRaster raster )
     {
         // raster = colorConvert(raster);
 
@@ -644,29 +645,29 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         frame.setVisible(true);
     }
 
-    private void displayImage()
+    private void displayImage ()
     {
         displayImage(rr);
     }
 
 
-    private void levelsDialog()
+    private void levelsDialog ()
     {
         System.out.println("  Adjusting levels...");
     }
 
-    private void curvesDialog()
+    private void curvesDialog ()
     {
         System.out.println("  Adjusting curves...");
     }
 
-    private void biasDialog()
+    private void biasDialog ()
     {
         System.out.println("  Adjusting levels...");
     }
 
 
-    private void monProfDialog()
+    private void monProfDialog ()
     {
         JFileChooser dialog = new JFileChooser(".");
 
@@ -683,7 +684,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         monProfilePath = filename;
     }
 
-    private void imageWorkingSpaceDialog()
+    private void imageWorkingSpaceDialog ()
     {
         JFileChooser dialog = new JFileChooser(".");
 
@@ -701,7 +702,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void f_new()
+    private void f_new ()
     {
         if ( srr == null )
             return;
@@ -722,7 +723,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         displayImage();
     }
 
-    private void openDialog()
+    private void openDialog ()
     {
         if ( wsProfilePath == null )
             imageWorkingSpaceDialog();
@@ -770,7 +771,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void rawExportDialog()
+    private void rawExportDialog ()
     {
         JFileChooser dialog = new JFileChooser(".");
 
@@ -798,12 +799,12 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void saveDialog()
+    private void saveDialog ()
     {
         saveAsDialog();
     }
 
-    private void saveAsDialog()
+    private void saveAsDialog ()
     {
         JFileChooser dialog = new JFileChooser(".");
 
@@ -833,7 +834,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
     }
 
 
-    private void shutdown()
+    private void shutdown ()
     { /* if ( cme != null ) { try { cme.dispose(); } catch ( Exception e ) { e.printStackTrace(); } } */
         dispose();
         System.exit(0);
@@ -849,7 +850,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
      */
 
 
-    public static void main( String[] args )
+    public static void main ( String[] args )
     {
         Main app = new Main();
 
@@ -880,7 +881,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
 		*/
 
 
-    private RawRaster colorConvert( RawRaster src )
+    private RawRaster colorConvert ( RawRaster src )
     {
         // if ( cme == null )
         // return src;

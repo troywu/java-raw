@@ -98,6 +98,8 @@ public class FileListPanel extends JPanel implements MouseListener
 
     public void updateFiles ( File dir )
     {
+        System.out.println("dir: " + dir);
+
         f_dir = new File(dir.getAbsolutePath());
 
         File[]    entries = f_dir.listFiles();
