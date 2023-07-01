@@ -44,3 +44,20 @@ then-abrupt RL demands; sometime in the distance future, I would like to get the
 code compiling again; if only to see it work myself.
 
 Thanks, Dave.
+
+## Trying it
+
+ATM, it's very broken.
+
+Managed to get it compiling again.  And, you can try it with:
+
+```
+make t1
+```
+
+Which is a test target, that apparently only shows the green channel.
+But, it does successfully decode the Canon EOS D30 CRW raw file!
+
+## Next Steps
+
+Trying to get the main window (main demo with gamma sliders) working again.
