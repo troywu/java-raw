@@ -8,6 +8,7 @@ import java.awt.GridLayout;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -41,15 +42,23 @@ public class FileChooserPanel
 
         addMouseListener(this);
 
+        System.out.println("Working dir: " + dir.getAbsolutePath());
+
         f_dir = dir;
 
         f_dp = new FileListPanel(f_dir, FileListPanel.DIRS);
-        f_dp.setSelectedIndex(0);
         f_dp.addListSelectionListener(this);
+        f_dp.setSelectedIndex(0);
 
-        dir = (File)f_dp.getSelectedValue();
+        Object obj = f_dp.getSelectedValue();
+        System.out.println("  FileListPanel.getSelectedValue(): " + obj);
 
-        f_fp       = new FileListPanel(dir);
+        // WARN - OMG reusing this parameter?  WTF?
+        final File selectedDir = (File)f_dp.getSelectedValue();
+
+        System.out.println("WTF - Selected dir: " + selectedDir);
+
+        f_fp       = new FileListPanel(selectedDir);
         f_dirLabel = new JLabel(dir.toString());
         Border b1 = new EmptyBorder(15, 15, 15, 15);
         Border b2 = new BevelBorder(BevelBorder.LOWERED);
@@ -124,16 +133,14 @@ public class FileChooserPanel
 
         if ( !evt.getValueIsAdjusting() )
         {
-            if ( src instanceof JList )
-            {
-                JList list = (JList)src;
+            if ( !(src instanceof JList<?>) ) return; // Ignore if not from JList
 
-                Object obj = list.getSelectedValue();
+            JList<File> jlist = (JList<File>)src;
 
-                if ( obj != null )
-                    if ( obj instanceof File )
-                        updateFiles((File)obj);
-            }
+            final List<File> selectedValuesList = jlist.getSelectedValuesList();
+
+            for ( File file : selectedValuesList )
+                updateFiles(file);
         }
     }
 

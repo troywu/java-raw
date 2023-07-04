@@ -119,8 +119,8 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         initMenus();
         // initEditPanels();
 
-        FileChooserPanel fileChooser = new FileChooserPanel(workingDir);
-        fileChooser.addListSelectionListener(this);
+//        FileChooserPanel fileChooser = new FileChooserPanel(workingDir);
+//        fileChooser.addListSelectionListener(this);
 
         JPanel imagePanel = new JPanel();
         imagePanel.setLayout(new GridLayout(1, 1));
@@ -132,9 +132,11 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
         desktop = new JDesktopPane();
         desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
 
-        JSplitPane splitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, false, fileChooser, desktop);
+//        JSplitPane splitter = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, false, fileChooser, desktop);
+//
+//        add(splitter);
 
-        add(splitter);
+        add(desktop);
     }
 
 
@@ -156,7 +158,7 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
          */
         if ( source == quitItem ) shutdown();
         else if ( source == newItem ) f_new();
-        else if ( source == openItem ) openDialog();
+        else if ( source == openItem ) openRawImageFileDialog();
         else if ( source == saveItem ) saveDialog();
         else if ( source == saveAsItem ) saveAsDialog();
 
@@ -746,6 +748,57 @@ public class Main extends JFrame implements ActionListener, WindowListener, LUTC
             e.printStackTrace();
             shutdown();
         }
+    }
+
+    private void openRawImageFileDialog ()
+    {
+        if ( wsProfilePath == null )
+            imageWorkingSpaceDialog();
+
+        JFileChooser dialog = new JFileChooser(".");
+
+        int status = dialog.showOpenDialog(this);
+
+        if ( status != JFileChooser.APPROVE_OPTION )
+            return;
+
+        final File         file     = dialog.getSelectedFile();
+        
+        loadImage(file);
+        //displayImage();
+        
+//        final String filename = file.getPath();
+//        file = new File(filename);
+//
+//        System.err.println("Opening RAW " + file.getPath() + "...");
+//
+//        try
+//        {
+//            final long length = file.length();
+//            byte[]     array  = new byte[(int)length];
+//
+//            System.err.println("  Size of CPF: " + length);
+//            System.err.println("  Created large array for CPF processing: (" + (int)length + " bytes).");
+//
+//            DataInputStream stream = new DataInputStream(new FileInputStream(file));
+//            stream.readFully(array);
+//            stream.close();
+//
+//            rr = ColorPPMFile.decode(array); // rr = ColorPPMFile.decode(new FileInputStream(filename));
+//            rr.setProfile(wsProfile);
+//
+//            /*
+//             * CMS change.
+//             */
+//            // rr = rr.get3ColorRGBRaster();
+//
+//            displayImage();
+//        }
+//        catch ( Exception e )
+//        {
+//            e.printStackTrace();
+//            shutdown();
+//        }
     }
 
 

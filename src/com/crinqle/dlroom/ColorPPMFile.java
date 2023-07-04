@@ -242,9 +242,10 @@ public class ColorPPMFile
         stream.write(profileString.getBytes());
 
         /*
-         * -------------------------------------------------- Base64-like
-         * encoding of embedded ICC Color Profile. Since PPM comments are based
-         * on single-line comments, I had to find a way to encode the profile
+         * --------------------------------------------------
+         * Base64-like encoding of embedded ICC Color Profile.
+         * Since PPM comments are based on single-line comments,
+         * I had to find a way to encode the profile
          * without the possibility of running into a '\n' character.
          */
         final byte[] encodedProfileArray = Base64Like.encode(profileArray);

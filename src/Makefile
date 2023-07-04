@@ -48,7 +48,7 @@ libnativecme.so:		cms/nativecme.o
 
 .PHONY:			run
 run:			all
-	java -Xmx1500m com.crinqle.dlroom.app.Main $(TEST_IMAGES) > /dev/null
+	java -Xmx1500m com.crinqle.dlroom.app.Main $(TEST_IMAGES)
 
 .PHONY:'		t1
 t1:			all
